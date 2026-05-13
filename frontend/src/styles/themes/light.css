@@ -1,0 +1,17 @@
+:root,
+.light {
+  --veteran-fg: 33 37 41;
+  --veteran-bg: 255 255 255;
+  --veteran-accent: 76 110 245;
+  --veteran-gold: 250 176 5;
+  --veteran-success: 47 158 68;
+  --veteran-danger: 230 73 73;
+  --veteran-warning: 240 140 0;
+  --veteran-info: 69 151 240;
+  --veteran-muted: 134 142 150;
+  --veteran-border: 222 226 230;
+  --veteran-surface: 248 249 250;
+  --veteran-surface-hover: 241 243 245;
+  --veteran-overlay: 0 0 0 / 0.4;
+  color-scheme: light;
+}

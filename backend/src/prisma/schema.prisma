@@ -1,0 +1,1524 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  username      String   @unique
+  email         String   @unique
+  passwordHash  String?
+  displayName   String?
+  bio           String?
+  company       String?
+  location      String?
+  websiteUrl    String?
+  avatarUrl     String?
+  isEmailVerified Boolean @default(false)
+  isAdmin       Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret String?
+  timezone      String?
+  language      String   @default("en")
+  theme         String   @default("system")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sessions            Session[]
+  oauthAccounts       OAuthAccount[]
+  sshKeys             SshKey[]
+  apiTokens           ApiToken[]
+  orgMembers          OrgMember[]
+  teamMembers         TeamMember[]
+  ownedRepositories   Repository[]       @relation("RepoOwner")
+  repoCollaborators   RepoCollaborator[]
+  repoTopics          RepoTopic[]
+  branches            Branch[]
+  branchProtections   BranchProtection[]
+  tags                Tag[]
+  releases            Release[]
+  releaseAssets       ReleaseAsset[]
+  commits             Commit[]
+  commitStatuses      CommitStatus[]
+  checkRuns           CheckRun[]
+  checkSuites         CheckSuite[]
+  issues              Issue[]            @relation("IssueAuthor")
+  assignedIssues      IssueAssignee[]
+  issueComments       IssueComment[]
+  issueReactions      IssueReaction[]
+  issueLabels         IssueLabel[]
+  issueMilestones     IssueMilestone[]
+  issueEvents         IssueEvent[]
+  pullRequests        PullRequest[]      @relation("PrAuthor")
+  prReviews           PrReview[]
+  prReviewComments    PrReviewComment[]
+  prReviewEvents      PrReviewEvent[]
+  prCommits           PrCommit[]
+  prCheckResults      PrCheckResult[]
+  webhooks            Webhook[]
+  webhookDeliveries   WebhookDelivery[]
+  notifications       Notification[]
+  notificationSubs    NotificationSubscription[]
+  discussionPosts     Discussion[]
+  discussionComments  DiscussionComment[]
+  discussionVotes     DiscussionVote[]
+  stars               Star[]
+  watches             Watch[]
+  forks               Fork[]
+  followers           Follow[]           @relation("FollowTarget")
+  following           Follow[]           @relation("FollowSource")
+  wikiPages           WikiPage[]
+  wikiRevisions       WikiRevision[]
+  projects            Project[]
+  projectColumns      ProjectColumn[]
+  projectCards        ProjectCard[]
+  codespaces          Codespace[]
+  codespacePorts      CodespacePort[]
+  ciPipelines         CiPipeline[]
+  ciJobs              CiJob[]
+  ciJobLogs           CiJobLog[]
+  ciArtifacts         CiArtifact[]
+  packages            Package[]
+  packageVersions     PackageVersion[]
+  packageDownloads    PackageDownload[]
+  auditLogs           AuditLog[]
+  contributorStats    ContributorStat[]
+  lfsObjects          LfsObject[]
+  lfsLocks            LfsLock[]
+  integrations        Integration[]
+  integrationInstalls IntegrationInstallation[]
+  sentAnnouncements   SiteAnnouncement[]
+
+  @@index([username])
+  @@index([email])
+  @@map("users")
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  token      String   @unique
+  ipAddress  String?
+  userAgent  String?
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("sessions")
+}
+
+model OAuthAccount {
+  id         String @id @default(cuid())
+  userId     String
+  provider   String
+  providerId String
+  email      String?
+  name       String?
+  avatarUrl  String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+  @@index([userId])
+  @@map("oauth_accounts")
+}
+
+model SshKey {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  key       String
+  fingerprint String
+  createdAt DateTime @default(now())
+  lastUsedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([fingerprint])
+  @@map("ssh_keys")
+}
+
+model ApiToken {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  token     String   @unique
+  scopes    String[]
+  expiresAt DateTime?
+  lastUsedAt DateTime?
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("api_tokens")
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  avatarUrl   String?
+  websiteUrl  String?
+  location    String?
+  email       String?
+  isVerified  Boolean  @default(false)
+  plan        String   @default("free")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members         OrgMember[]
+  teams           Team[]
+  repositories    Repository[]   @relation("OrgRepo")
+  projects        Project[]
+  auditLogs       AuditLog[]
+  integrations    Integration[]
+  lfsLocks        LfsLock[]
+  ciPipelines     CiPipeline[]
+  packages        Package[]
+  siteAnnouncements SiteAnnouncement[]
+
+  @@index([name])
+  @@index([slug])
+  @@map("organizations")
+}
+
+model OrgMember {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String
+  role           String   @default("member") // owner, admin, member, billing
+  permissions    String[] @default([])
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+  @@index([userId])
+  @@map("org_members")
+}
+
+model Team {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  description    String?
+  visibility     String   @default("secret") // secret, closed
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members      TeamMember[]
+  repos        TeamRepo[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
+  @@map("teams")
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  teamId    String
+  userId    String
+  role      String   @default("member") // maintainer, member
+  createdAt DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@index([userId])
+  @@map("team_members")
+}
+
+model TeamRepo {
+  id        String   @id @default(cuid())
+  teamId    String
+  repositoryId String
+  permission String   @default("pull") // pull, push, admin
+  createdAt DateTime @default(now())
+
+  team       Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, repositoryId])
+  @@index([repositoryId])
+  @@map("team_repos")
+}
+
+model Repository {
+  id            String   @id @default(cuid())
+  ownerId       String
+  organizationId String?
+  name          String
+  fullName      String   @unique
+  description   String?
+  homepageUrl   String?
+  language      String?
+  isPrivate     Boolean  @default(false)
+  isArchived    Boolean  @default(false)
+  isDisabled    Boolean  @default(false)
+  isMirror      Boolean  @default(false)
+  isTemplate    Boolean  @default(false)
+  isFork        Boolean  @default(false)
+  isEmpty       Boolean  @default(true)
+  defaultBranch String   @default("main")
+  gitUrl        String?
+  sshUrl        String?
+  cloneUrl      String?
+  mirrorUrl     String?
+  size          Int      @default(0)
+  starsCount    Int      @default(0)
+  forksCount    Int      @default(0)
+  watchersCount Int      @default(0)
+  openIssuesCount Int    @default(0)
+  openPrCount   Int      @default(0)
+  license       String?
+  topics        String[] @default([])
+  allowForking  Boolean  @default(true)
+  allowIssues   Boolean  @default(true)
+  allowProjects Boolean  @default(true)
+  allowWiki     Boolean  @default(true)
+  allowMerge    Boolean  @default(true)
+  allowRebase   Boolean  @default(true)
+  allowSquash   Boolean  @default(true)
+  deleteBranchOnMerge Boolean @default(false)
+  hasDownloads  Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  pushedAt      DateTime @default(now())
+
+  owner         User             @relation("RepoOwner", fields: [ownerId], references: [id])
+  organization  Organization?    @relation("OrgRepo", fields: [organizationId], references: [id])
+  collaborators RepoCollaborator[]
+  topics        RepoTopic[]
+  branches      Branch[]
+  branchProtections BranchProtection[]
+  tags          Tag[]
+  releases      Release[]
+  commits       Commit[]
+  commitStatuses CommitStatus[]
+  checkRuns     CheckRun[]
+  checkSuites   CheckSuite[]
+  issues        Issue[]
+  issueLabels   IssueLabel[]
+  issueMilestones IssueMilestone[]
+  pullRequests  PullRequest[]
+  webhooks      Webhook[]
+  stars         Star[]
+  watches       Watch[]
+  forks         Fork[]
+  discussions   Discussion[]
+  wikiPages     WikiPage[]
+  projects      Project[]
+  ciPipelines   CiPipeline[]
+  packages      Package[]
+  contributorStats ContributorStat[]
+  repoTraffic   RepoTraffic[]
+  repoClones    RepoClone[]
+  lfsObjects    LfsObject[]
+  lfsLocks      LfsLock[]
+  teamRepos     TeamRepo[]
+
+  @@index([ownerId])
+  @@index([organizationId])
+  @@index([fullName])
+  @@index([name])
+  @@map("repositories")
+}
+
+model RepoCollaborator {
+  id           String   @id @default(cuid())
+  repositoryId String
+  userId       String
+  permission   String   @default("pull") // pull, push, triage, maintain, admin
+  createdAt    DateTime @default(now())
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, userId])
+  @@index([userId])
+  @@map("repo_collaborators")
+}
+
+model RepoTopic {
+  id           String   @id @default(cuid())
+  repositoryId String
+  topic        String
+  addedById    String?
+  createdAt    DateTime @default(now())
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  addedBy    User?      @relation(fields: [addedById], references: [id])
+
+  @@unique([repositoryId, topic])
+  @@index([topic])
+  @@map("repo_topics")
+}
+
+model Branch {
+  id           String   @id @default(cuid())
+  repositoryId String
+  name         String
+  sha          String
+  isProtected  Boolean  @default(false)
+  createdById  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  createdBy  User?      @relation(fields: [createdById], references: [id])
+
+  @@unique([repositoryId, name])
+  @@index([repositoryId])
+  @@map("branches")
+}
+
+model BranchProtection {
+  id                    String   @id @default(cuid())
+  repositoryId          String
+  branch                String   @default("*")
+  requiredReviews       Int      @default(0)
+  requiredStatusChecks  String[] @default([])
+  requiredConversation  Boolean  @default(false)
+  enforceAdmins         Boolean  @default(false)
+  dismissStaleReviews   Boolean  @default(false)
+  requireCodeOwnerReview Boolean @default(false)
+  requireSignedCommits  Boolean  @default(false)
+  requireLinearHistory  Boolean  @default(false)
+  allowForcePush        Boolean  @default(false)
+  allowDeletions        Boolean  @default(false)
+  blockCreation         Boolean  @default(false)
+  pattern               String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, branch])
+  @@index([repositoryId])
+  @@map("branch_protections")
+}
+
+model Tag {
+  id           String   @id @default(cuid())
+  repositoryId String
+  name         String
+  sha          String
+  message      String?
+  createdById  String?
+  createdAt    DateTime @default(now())
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  createdBy  User?      @relation(fields: [createdById], references: [id])
+
+  @@unique([repositoryId, name])
+  @@index([repositoryId])
+  @@map("tags")
+}
+
+model Release {
+  id          String   @id @default(cuid())
+  repositoryId String
+  tagId       String?
+  tagName     String
+  name        String?
+  body        String?
+  isPrerelease Boolean @default(false)
+  isDraft     Boolean  @default(true)
+  authorId    String
+  createdAt   DateTime @default(now())
+  publishedAt DateTime?
+  updatedAt   DateTime @updatedAt
+
+  repository Repository    @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  tag        Tag?          @relation(fields: [tagId], references: [id])
+  author     User          @relation(fields: [authorId], references: [id])
+  assets     ReleaseAsset[]
+
+  @@index([repositoryId])
+  @@index([tagId])
+  @@map("releases")
+}
+
+model ReleaseAsset {
+  id           String   @id @default(cuid())
+  releaseId    String
+  name         String
+  contentType  String
+  size         Int
+  downloadUrl  String
+  uploaderId   String
+  createdAt    DateTime @default(now())
+  downloadCount Int     @default(0)
+
+  release  Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
+  uploader User    @relation(fields: [uploaderId], references: [id])
+
+  @@index([releaseId])
+  @@map("release_assets")
+}
+
+model Commit {
+  id           String   @id @default(cuid())
+  repositoryId String
+  sha          String
+  message      String
+  authorId     String?
+  authorName   String
+  authorEmail  String
+  authoredAt   DateTime
+  committerName String
+  committerEmail String
+  committedAt  DateTime
+  treeSha      String
+  parentShas   String[] @default([])
+  additions    Int      @default(0)
+  deletions    Int      @default(0)
+  fileCount    Int      @default(0)
+  isVerified   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  repository   Repository         @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  author       User?              @relation(fields: [authorId], references: [id])
+  statuses     CommitStatus[]
+  parents      Commit[]           @relation("CommitParents")
+  children     Commit[]           @relation("CommitParents")
+  checkSuites  CheckSuite[]
+  prCommits    PrCommit[]
+
+  @@unique([repositoryId, sha])
+  @@index([repositoryId])
+  @@index([authorId])
+  @@index([sha])
+  @@map("commits")
+}
+
+model CommitParents {
+  commitId    String
+  parentId    String
+
+  commit  Commit @relation("CommitParents", fields: [commitId], references: [id], onDelete: Cascade)
+  parent  Commit @relation("CommitParents", fields: [parentId], references: [id], onDelete: Cascade)
+
+  @@id([commitId, parentId])
+  @@map("commit_parents")
+}
+
+model CommitStatus {
+  id           String   @id @default(cuid())
+  commitId     String
+  context      String
+  description  String?
+  state        String   // pending, success, failure, error
+  targetUrl    String?
+  creatorId    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  commit  Commit @relation(fields: [commitId], references: [id], onDelete: Cascade)
+  creator User?  @relation(fields: [creatorId], references: [id])
+
+  @@unique([commitId, context])
+  @@index([commitId])
+  @@map("commit_statuses")
+}
+
+model CheckSuite {
+  id           String   @id @default(cuid())
+  repositoryId String
+  commitSha    String
+  commitId     String?
+  status       String   @default("queued")
+  conclusion   String?
+  headBranch   String
+  headSha      String
+  runCount     Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  commit     Commit?    @relation(fields: [commitId], references: [id])
+  runs       CheckRun[]
+
+  @@index([repositoryId])
+  @@index([commitId])
+  @@map("check_suites")
+}
+
+model CheckRun {
+  id           String   @id @default(cuid())
+  checkSuiteId String
+  name         String
+  status       String   @default("queued")
+  conclusion   String?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  detailsUrl   String?
+  externalId   String?
+  title        String?
+  summary      String?
+  text         String?
+  annotations  Json?
+  images       Json?
+  actions      Json?
+  creatorId    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  checkSuite CheckSuite @relation(fields: [checkSuiteId], references: [id], onDelete: Cascade)
+  creator    User?      @relation(fields: [creatorId], references: [id])
+
+  @@index([checkSuiteId])
+  @@map("check_runs")
+}
+
+model Issue {
+  id            String   @id @default(cuid())
+  repositoryId  String
+  number        Int
+  title         String
+  body          String?
+  state         String   @default("open")
+  isLocked      Boolean  @default(false)
+  authorId      String
+  milestoneId   String?
+  assigneeId    String?
+  labelsList    String[] @default([])
+  pullRequestId String?
+  duplicateOfId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  closedAt      DateTime?
+  stateReason   String?
+
+  repository   Repository       @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  author       User             @relation("IssueAuthor", fields: [authorId], references: [id])
+  milestone    IssueMilestone?  @relation(fields: [milestoneId], references: [id])
+  assignees    IssueAssignee[]
+  comments     IssueComment[]
+  reactions    IssueReaction[]
+  events       IssueEvent[]
+  pullRequest  PullRequest?     @relation(fields: [pullRequestId], references: [id])
+  duplicateOf  Issue?           @relation("DuplicateIssue", fields: [duplicateOfId], references: [id])
+  duplicates   Issue[]          @relation("DuplicateIssue")
+
+  @@unique([repositoryId, number])
+  @@index([repositoryId])
+  @@index([authorId])
+  @@index([milestoneId])
+  @@index([state])
+  @@map("issues")
+}
+
+model IssueAssignee {
+  id        String @id @default(cuid())
+  issueId   String
+  userId    String
+
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([issueId, userId])
+  @@map("issue_assignees")
+}
+
+model IssueComment {
+  id        String   @id @default(cuid())
+  issueId   String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  issue  Issue           @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  author User            @relation(fields: [authorId], references: [id])
+  reactions IssueReaction[]
+
+  @@index([issueId])
+  @@index([authorId])
+  @@map("issue_comments")
+}
+
+model IssueReaction {
+  id        String   @id @default(cuid())
+  issueId   String?
+  commentId String?
+  userId    String
+  reaction  String   // +1, -1, laugh, confused, heart, hooray, rocket, eyes
+  createdAt DateTime @default(now())
+
+  issue   Issue?        @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  comment IssueComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([issueId])
+  @@index([commentId])
+  @@map("issue_reactions")
+}
+
+model IssueLabel {
+  id           String   @id @default(cuid())
+  repositoryId String
+  name         String
+  color        String   @default("e3e3e3")
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, name])
+  @@index([repositoryId])
+  @@map("issue_labels")
+}
+
+model IssueMilestone {
+  id           String   @id @default(cuid())
+  repositoryId String
+  number       Int
+  title        String
+  description  String?
+  dueOn        DateTime?
+  state        String   @default("open")
+  closedAt     DateTime?
+  closedById   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  closedBy   User?      @relation(fields: [closedById], references: [id])
+  issues     Issue[]
+
+  @@unique([repositoryId, number])
+  @@index([repositoryId])
+  @@map("issue_milestones")
+}
+
+model IssueEvent {
+  id        String   @id @default(cuid())
+  issueId   String
+  actorId   String
+  event     String   // closed, reopened, assigned, unassigned, labeled, unlabeled, milestoned, demilestoned, locked, unlocked, referenced, mentioned, subscribed
+  data      Json?
+  createdAt DateTime @default(now())
+
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  actor User  @relation(fields: [actorId], references: [id])
+
+  @@index([issueId])
+  @@map("issue_events")
+}
+
+model PullRequest {
+  id              String   @id @default(cuid())
+  repositoryId    String
+  number          Int
+  title           String
+  body            String?
+  state           String   @default("open")
+  isDraft         Boolean  @default(false)
+  isMerged        Boolean  @default(false)
+  mergeCommitSha  String?
+  mergeMethod     String?
+  mergedById      String?
+  mergedAt        DateTime?
+  closedAt        DateTime?
+  closedById      String?
+  authorId        String
+  headRepoId      String?
+  headBranch      String
+  headSha         String
+  baseRepoId      String
+  baseBranch      String
+  baseSha         String
+  additions       Int      @default(0)
+  deletions       Int      @default(0)
+  fileCount       Int      @default(0)
+  mergeable       Boolean  @default(true)
+  rebaseable      Boolean  @default(true)
+  autoMergeEnabled Boolean @default(false)
+  autoMergeMethod  String?
+  labelsList      String[] @default([])
+  milestoneId     String?
+  draftAt         DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  repository   Repository         @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  author       User               @relation("PrAuthor", fields: [authorId], references: [id])
+  headRepo     Repository?        @relation("HeadRepo", fields: [headRepoId], references: [id])
+  baseRepo     Repository         @relation("BaseRepo", fields: [baseRepoId], references: [id])
+  mergedBy     User?              @relation(fields: [mergedById], references: [id])
+  closedBy     User?              @relation(fields: [closedById], references: [id])
+  milestone    IssueMilestone?    @relation(fields: [milestoneId], references: [id])
+  issue        Issue?             @relation(fields: [id], references: [pullRequestId])
+  reviews      PrReview[]
+  reviewComments PrReviewComment[]
+  reviewEvents PrReviewEvent[]
+  commits      PrCommit[]
+  checkResults PrCheckResult[]
+
+  @@unique([repositoryId, number])
+  @@index([repositoryId])
+  @@index([authorId])
+  @@index([headRepoId])
+  @@index([baseRepoId])
+  @@map("pull_requests")
+}
+
+model PrReview {
+  id           String   @id @default(cuid())
+  pullRequestId String
+  reviewerId   String
+  body         String?
+  state        String   // approved, changes_requested, commented, dismissed, pending
+  commitSha    String?
+  submittedAt  DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  pullRequest PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
+  reviewer    User        @relation(fields: [reviewerId], references: [id])
+
+  @@index([pullRequestId])
+  @@index([reviewerId])
+  @@map("pr_reviews")
+}
+
+model PrReviewComment {
+  id            String   @id @default(cuid())
+  pullRequestId String
+  reviewId      String?
+  authorId      String
+  body          String
+  path          String
+  position      Int?
+  line          Int?
+  commitSha     String
+  inReplyToId   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  pullRequest PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
+  review      PrReview?   @relation(fields: [reviewId], references: [id])
+  author      User        @relation(fields: [authorId], references: [id])
+
+  @@index([pullRequestId])
+  @@index([reviewId])
+  @@map("pr_review_comments")
+}
+
+model PrReviewEvent {
+  id            String   @id @default(cuid())
+  pullRequestId String
+  actorId       String
+  event         String   // approved, changes_requested, commented, dismissed, head_ref_deleted, head_ref_restored, merged, auto_merge_enabled, auto_merge_disabled
+  data          Json?
+  createdAt     DateTime @default(now())
+
+  pullRequest PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
+  actor       User        @relation(fields: [actorId], references: [id])
+
+  @@index([pullRequestId])
+  @@map("pr_review_events")
+}
+
+model PrCommit {
+  id            String @id @default(cuid())
+  pullRequestId String
+  commitId      String
+
+  pullRequest PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
+  commit      Commit      @relation(fields: [commitId], references: [id], onDelete: Cascade)
+
+  @@unique([pullRequestId, commitId])
+  @@index([commitId])
+  @@map("pr_commits")
+}
+
+model PrCheckResult {
+  id            String   @id @default(cuid())
+  pullRequestId String
+  checkRunId    String
+  status        String   @default("queued")
+  conclusion    String?
+  createdAt     DateTime @default(now())
+
+  pullRequest PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
+
+  @@index([pullRequestId])
+  @@map("pr_check_results")
+}
+
+model Webhook {
+  id            String   @id @default(cuid())
+  repositoryId  String?
+  organizationId String?
+  userId        String?
+  url           String
+  contentType   String   @default("json")
+  secret        String?
+  events        String[] @default([])
+  isActive      Boolean  @default(true)
+  sslVerify     Boolean  @default(true)
+  lastDelivery  DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  repository  Repository?        @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  organization Organization?     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user        User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries  WebhookDelivery[]
+
+  @@index([repositoryId])
+  @@index([organizationId])
+  @@index([userId])
+  @@map("webhooks")
+}
+
+model WebhookDelivery {
+  id           String   @id @default(cuid())
+  webhookId    String
+  event        String
+  payload      Json
+  responseCode Int?
+  responseBody String?
+  status       String   @default("pending")
+  attempts     Int      @default(0)
+  nextAttempt  DateTime?
+  createdAt    DateTime @default(now())
+
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  @@index([webhookId])
+  @@index([status])
+  @@map("webhook_deliveries")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // issue, pull_request, release, discussion, security_alert, ci, mention, review
+  title     String
+  body      String?
+  data      Json?
+  isRead    Boolean  @default(false)
+  repoId    String?
+  actorId   String?
+  link      String?
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actor User? @relation("NotificationActor", fields: [actorId], references: [id])
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@map("notifications")
+}
+
+model NotificationSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  repoId    String?
+  type      String   // issue, pull_request, release, discussion, security
+  channel   String   @default("email")
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notification_subscriptions")
+}
+
+model Discussion {
+  id           String   @id @default(cuid())
+  repositoryId String
+  number       Int
+  title        String
+  body         String?
+  authorId     String
+  isPinned     Boolean  @default(false)
+  isLocked     Boolean  @default(false)
+  answerId     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  repository Repository         @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  author     User               @relation(fields: [authorId], references: [id])
+  comments   DiscussionComment[]
+  votes      DiscussionVote[]
+
+  @@unique([repositoryId, number])
+  @@index([repositoryId])
+  @@index([authorId])
+  @@map("discussions")
+}
+
+model DiscussionComment {
+  id           String   @id @default(cuid())
+  discussionId String
+  authorId     String
+  body         String
+  parentId     String?
+  isAnswer     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  discussion Discussion        @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  author     User              @relation(fields: [authorId], references: [id])
+  parent     DiscussionComment? @relation("ReplyTo", fields: [parentId], references: [id])
+  replies    DiscussionComment[] @relation("ReplyTo")
+
+  @@index([discussionId])
+  @@index([authorId])
+  @@map("discussion_comments")
+}
+
+model DiscussionVote {
+  id           String @id @default(cuid())
+  discussionId String
+  userId       String
+  vote         Int    @default(1) // 1 or -1
+
+  discussion Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([discussionId, userId])
+  @@map("discussion_votes")
+}
+
+model Star {
+  id           String   @id @default(cuid())
+  repositoryId String
+  userId       String
+  createdAt    DateTime @default(now())
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, userId])
+  @@index([userId])
+  @@map("stars")
+}
+
+model Watch {
+  id           String   @id @default(cuid())
+  repositoryId String
+  userId       String
+  subscription String   @default("subscribed") // subscribed, ignored, muted
+  createdAt    DateTime @default(now())
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, userId])
+  @@index([userId])
+  @@map("watches")
+}
+
+model Fork {
+  id           String   @id @default(cuid())
+  repositoryId String
+  forkId       String   @unique
+  userId       String
+  createdAt    DateTime @default(now())
+
+  repository Repository @relation("OriginalRepo", fields: [repositoryId], references: [id], onDelete: Cascade)
+  fork       Repository @relation("ForkRepo", fields: [forkId], references: [id])
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([repositoryId])
+  @@index([userId])
+  @@map("forks")
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("FollowSource", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("FollowTarget", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@map("followers")
+}
+
+model WikiPage {
+  id           String   @id @default(cuid())
+  repositoryId String
+  title        String
+  slug         String
+  body         String
+  authorId     String
+  isPublished  Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  repository Repository   @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  author     User         @relation(fields: [authorId], references: [id])
+  revisions  WikiRevision[]
+
+  @@unique([repositoryId, slug])
+  @@index([repositoryId])
+  @@map("wiki_pages")
+}
+
+model WikiRevision {
+  id        String   @id @default(cuid())
+  pageId    String
+  authorId  String
+  body      String
+  message   String?
+  number    Int
+  createdAt DateTime @default(now())
+
+  page   WikiPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  author User     @relation(fields: [authorId], references: [id])
+
+  @@index([pageId])
+  @@map("wiki_revisions")
+}
+
+model Project {
+  id             String   @id @default(cuid())
+  ownerId        String?
+  organizationId String?
+  repositoryId   String?
+  name           String
+  body           String?
+  number         Int
+  state          String   @default("open")
+  isTemplate     Boolean  @default(false)
+  creatorId      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  owner        User?             @relation(fields: [ownerId], references: [id])
+  organization Organization?     @relation(fields: [organizationId], references: [id])
+  repository   Repository?       @relation(fields: [repositoryId], references: [id])
+  creator      User?             @relation(fields: [creatorId], references: [id])
+  columns      ProjectColumn[]
+
+  @@index([ownerId])
+  @@index([organizationId])
+  @@index([repositoryId])
+  @@map("projects")
+}
+
+model ProjectColumn {
+  id        String   @id @default(cuid())
+  projectId String
+  name      String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  project Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  cards   ProjectCard[]
+
+  @@index([projectId])
+  @@map("project_columns")
+}
+
+model ProjectCard {
+  id         String   @id @default(cuid())
+  columnId   String
+  issueId    String?
+  note       String?
+  position   Int      @default(0)
+  creatorId  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  column  ProjectColumn @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  issue   Issue?        @relation(fields: [issueId], references: [id])
+  creator User?         @relation(fields: [creatorId], references: [id])
+
+  @@index([columnId])
+  @@map("project_cards")
+}
+
+model Codespace {
+  id            String   @id @default(cuid())
+  name          String
+  userId        String
+  repositoryId  String?
+  branch        String   @default("main")
+  machineType   String   @default("basic")
+  state         String   @default("created") // created, starting, running, stopping, stopped, error, deleted
+  location      String   @default("us-east")
+  url           String?
+  lastActivity  DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repository Repository?     @relation(fields: [repositoryId], references: [id])
+  ports      CodespacePort[]
+
+  @@index([userId])
+  @@index([repositoryId])
+  @@map("codespaces")
+}
+
+model CodespacePort {
+  id          String   @id @default(cuid())
+  codespaceId String
+  port        Int
+  visibility  String   @default("private") // private, public, org
+  label       String?
+  url         String?
+  createdAt   DateTime @default(now())
+
+  codespace Codespace @relation(fields: [codespaceId], references: [id], onDelete: Cascade)
+
+  @@index([codespaceId])
+  @@map("codespace_ports")
+}
+
+model CiPipeline {
+  id            String   @id @default(cuid())
+  repositoryId  String
+  commitSha     String
+  branch        String
+  status        String   @default("pending") // pending, running, passed, failed, cancelled, skipped
+  triggeredBy   String?  // webhook, manual, schedule, pr
+  creatorId     String?
+  config        Json?
+  startedAt     DateTime?
+  finishedAt    DateTime?
+  duration      Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  creator    User?      @relation(fields: [creatorId], references: [id])
+  jobs       CiJob[]
+
+  @@index([repositoryId])
+  @@index([commitSha])
+  @@index([status])
+  @@map("ci_pipelines")
+}
+
+model CiJob {
+  id          String   @id @default(cuid())
+  pipelineId  String
+  name        String
+  status      String   @default("pending")
+  conclusion  String?
+  runnerLabel String?
+  image       String?
+  commands    String[]
+  env         Json?
+  startedAt   DateTime?
+  finishedAt  DateTime?
+  duration    Int?
+  attempt     Int      @default(1)
+  retryOf     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  pipeline CiPipeline   @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  logs     CiJobLog[]
+  artifacts CiArtifact[]
+
+  @@index([pipelineId])
+  @@index([status])
+  @@map("ci_jobs")
+}
+
+model CiJobLog {
+  id        String   @id @default(cuid())
+  jobId     String
+  content   String
+  lineStart Int      @default(0)
+  lineEnd   Int      @default(0)
+  createdAt DateTime @default(now())
+
+  job CiJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@map("ci_job_logs")
+}
+
+model CiArtifact {
+  id         String   @id @default(cuid())
+  jobId      String
+  name       String
+  path       String
+  size       Int
+  mimeType   String   @default("application/octet-stream")
+  downloadUrl String?
+  expiresAt  DateTime?
+  createdAt  DateTime @default(now())
+
+  job CiJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@map("ci_artifacts")
+}
+
+model Package {
+  id           String   @id @default(cuid())
+  repositoryId String?
+  organizationId String?
+  ownerId      String?
+  name         String
+  type         String   // npm, docker, maven, pypi, rubygems, container
+  visibility   String   @default("private")
+  description  String?
+  homepageUrl  String?
+  downloadCount Int     @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  repository Repository?    @relation(fields: [repositoryId], references: [id])
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  owner      User?          @relation(fields: [ownerId], references: [id])
+  versions   PackageVersion[]
+
+  @@index([repositoryId])
+  @@index([organizationId])
+  @@index([name])
+  @@map("packages")
+}
+
+model PackageVersion {
+  id          String   @id @default(cuid())
+  packageId   String
+  version     String
+  metadata    Json?
+  fileUrl     String?
+  sha256      String?
+  size        Int      @default(0)
+  isLatest    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  package   Package          @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  downloads PackageDownload[]
+
+  @@unique([packageId, version])
+  @@index([packageId])
+  @@map("package_versions")
+}
+
+model PackageDownload {
+  id        String   @id @default(cuid())
+  versionId String
+  userId    String?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  version PackageVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
+  user    User?          @relation(fields: [userId], references: [id])
+
+  @@index([versionId])
+  @@map("package_downloads")
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  orgId     String?
+  repoId    String?
+  action    String
+  target    String?
+  targetId  String?
+  data      Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  actor User?         @relation(fields: [actorId], references: [id])
+  org   Organization? @relation(fields: [orgId], references: [id])
+
+  @@index([actorId])
+  @@index([orgId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model AdminSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("admin_settings")
+}
+
+model SiteAnnouncement {
+  id        String   @id @default(cuid())
+  orgId     String?
+  message   String
+  severity  String   @default("info") // info, warning, critical
+  isActive  Boolean  @default(true)
+  startsAt  DateTime?
+  endsAt    DateTime?
+  createdById String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  org        Organization? @relation(fields: [orgId], references: [id])
+  createdBy  User?         @relation(fields: [createdById], references: [id])
+
+  @@index([orgId])
+  @@map("site_announcements")
+}
+
+model ContributorStat {
+  id           String   @id @default(cuid())
+  repositoryId String
+  userId       String
+  commits      Int      @default(0)
+  additions    Int      @default(0)
+  deletions    Int      @default(0)
+  firstCommit  DateTime?
+  lastCommit   DateTime?
+  updatedAt    DateTime @updatedAt
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, userId])
+  @@index([repositoryId])
+  @@index([userId])
+  @@map("contributor_stats")
+}
+
+model RepoTraffic {
+  id           String   @id @default(cuid())
+  repositoryId String
+  date         DateTime
+  views        Int      @default(0)
+  uniqueViews  Int      @default(0)
+  visitors     Int      @default(0)
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, date])
+  @@index([repositoryId])
+  @@map("repo_traffic")
+}
+
+model RepoClone {
+  id           String   @id @default(cuid())
+  repositoryId String
+  date         DateTime
+  clones       Int      @default(0)
+  uniqueClones Int      @default(0)
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+
+  @@unique([repositoryId, date])
+  @@index([repositoryId])
+  @@map("repo_clones")
+}
+
+model LfsObject {
+  id           String   @id @default(cuid())
+  repositoryId String
+  oid          String
+  size         Int
+  storagePath  String
+  uploadedById String?
+  uploadedAt   DateTime @default(now())
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  uploader   User?      @relation(fields: [uploadedById], references: [id])
+
+  @@unique([repositoryId, oid])
+  @@index([repositoryId])
+  @@index([oid])
+  @@map("lfs_objects")
+}
+
+model LfsLock {
+  id          String   @id @default(cuid())
+  repositoryId String
+  path        String
+  ownerId     String
+  lockTier    String   @default("default") // default, strict, sticky
+  createdAt   DateTime @default(now())
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  owner      Organization? @relation(fields: [ownerId], references: [id])
+  lockedBy   User?       @relation("LfsLockUser", fields: [id], references: [id])
+
+  @@unique([repositoryId, path])
+  @@index([repositoryId])
+  @@map("lfs_locks")
+}
+
+model Integration {
+  id             String   @id @default(cuid())
+  ownerId        String?
+  organizationId String?
+  name           String
+  slug           String   @unique
+  description    String?
+  type           String   // github_app, oauth_app, webhook
+  url            String?
+  iconUrl        String?
+  isPublic       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  owner        User?                    @relation(fields: [ownerId], references: [id])
+  organization Organization?            @relation(fields: [organizationId], references: [id])
+  installations IntegrationInstallation[]
+
+  @@index([ownerId])
+  @@index([organizationId])
+  @@map("integrations")
+}
+
+model IntegrationInstallation {
+  id            String   @id @default(cuid())
+  integrationId String
+  targetId      String   // org or user id
+  targetType    String   // organization, user
+  permissions   Json?
+  events        String[] @default([])
+  token         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+
+  @@unique([integrationId, targetId, targetType])
+  @@index([integrationId])
+  @@map("integration_installations")
+}
+
+model IntegrationPermission {
+  id              String @id @default(cuid())
+  installationId  String
+  permission      String
+  granted         Boolean @default(false)
+
+  installation IntegrationInstallation @relation(fields: [installationId], references: [id], onDelete: Cascade)
+
+  @@unique([installationId, permission])
+  @@map("integration_permissions")
+}

@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: veteran
+      POSTGRES_USER: veteran
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-veteran_secret}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U veteran"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  veteran:
+    build: .
+    ports:
+      - "7860:7860"
+      - "2222:2222"
+      - "4873:4873"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://veteran:${POSTGRES_PASSWORD:-veteran_secret}@postgres:5432/veteran
+      REDIS_URL: redis://redis:6379
+      APP_URL: ${APP_URL:-http://localhost:7860}
+      APP_SECRET: ${APP_SECRET:-change-me-in-production}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@veteran.app}
+      DATA_PATH: /data
+      REGISTRATION_ENABLED: ${REGISTRATION_ENABLED:-true}
+      CODESPACES_ENABLED: ${CODESPACES_ENABLED:-true}
+    volumes:
+      - veteran_data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  veteran_data:
