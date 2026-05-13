@@ -145,6 +145,14 @@ const rawSchema = z.object({
   SENTRY_DSN: z.string().optional(),
   SENTRY_ENVIRONMENT: z.string().optional(),
 
+  // AI / Copilot
+  AI_PROVIDER: z.string().default("openai"),
+  AI_API_KEY: z.string().optional(),
+  AI_MODEL: z.string().optional(),
+  AI_OPENAI_COMPATIBLE_URL: z.string().optional(),
+  AI_MAX_TOKENS: z.coerce.number().default(4096),
+  AI_ENABLED: z.string().default("false"),
+
   // Supabase
   SUPABASE_URL: z.string().optional(),
   SUPABASE_ANON_KEY: z.string().optional(),
@@ -304,6 +312,14 @@ const envSchema = rawSchema.transform((raw) => {
     METRICS_AUTH_TOKEN: raw.METRICS_AUTH_TOKEN,
     SENTRY_DSN: raw.SENTRY_DSN,
     SENTRY_ENVIRONMENT: raw.SENTRY_ENVIRONMENT,
+
+    // AI / Copilot
+    AI_PROVIDER: raw.AI_PROVIDER,
+    AI_API_KEY: raw.AI_API_KEY,
+    AI_MODEL: raw.AI_MODEL,
+    AI_OPENAI_COMPATIBLE_URL: raw.AI_OPENAI_COMPATIBLE_URL,
+    AI_MAX_TOKENS: raw.AI_MAX_TOKENS,
+    AI_ENABLED: bool(raw.AI_ENABLED, false),
 
     // Supabase
     SUPABASE_URL: raw.SUPABASE_URL,

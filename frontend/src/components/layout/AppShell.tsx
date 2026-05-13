@@ -5,6 +5,7 @@ import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import { CommandPalette } from './CommandPalette';
 import { Footer } from './Footer';
+import { AICopilot } from '../shared/AICopilot';
 import { Toaster } from 'react-hot-toast';
 
 interface AppShellProps {
@@ -67,6 +68,9 @@ export function AppShell({ children }: AppShellProps) {
         isOpen={commandPaletteOpen}
         onClose={() => setCommandPaletteOpen(false)}
       />
+
+      {/* AI Copilot */}
+      <AICopilot />
 
       {/* Global keyboard shortcut for command palette */}
       <div

@@ -71,7 +71,6 @@ export function Login() {
           )}
 
           <VeteranInput
-            label="Email"
             type="text"
             placeholder="username or email"
             label="Username or Email"

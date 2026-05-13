@@ -30,6 +30,7 @@ import insightRoutes from "./routes/insights.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import metaRoutes from "./routes/meta.routes.js";
 import pageRoutes from "./routes/pages.routes.js";
+import aiRoutes from "./routes/ai.routes.js";
 
 const app = express();
 
@@ -72,6 +73,7 @@ app.use(`${API_PREFIX}/repos`, insightRoutes);
 app.use(`${API_PREFIX}/admin`, adminRoutes);
 app.use(`${API_PREFIX}`, metaRoutes);
 app.use(`${API_PREFIX}/repos`, pageRoutes);
+app.use(`${API_PREFIX}/ai`, aiRoutes);
 
 app.use(errorHandler);
 
