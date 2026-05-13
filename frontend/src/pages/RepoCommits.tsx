@@ -43,7 +43,7 @@ function mapCommit(apiCommit: any): any {
 }
 
 export function RepoCommits() {
-  const { owner, name } = useParams<{ owner: string; name: string }>();
+  const p = useParams<{ owner: string; name?: string; repo?: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || "";
   const navigate = useNavigate();
 
   const { data: repo, isLoading: repoLoading } = useRepo(owner!, name!);

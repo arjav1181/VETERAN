@@ -80,7 +80,7 @@ function mapPRCommit(c: any): any {
 }
 
 export function RepoPullDetail() {
-  const { owner, name, number } = useParams<{ owner: string; name: string; number: string }>();
+  const p = useParams<{ owner: string; name?: string; repo?: string; number: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || ""; const number = p.number;
   const navigate = useNavigate();
   const pullNumber = Number(number);
 

@@ -9,7 +9,7 @@ import { VeteranSkeleton } from '@ui/VeteranSkeleton';
 import { VeteranEmptyState } from '@ui/VeteranEmptyState';
 
 export function RepoInsights() {
-  const { owner, name } = useParams<{ owner: string; name: string }>();
+  const p = useParams<{ owner: string; name?: string; repo?: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || "";
 
   const { data: contribData, isLoading, error } = useQuery({
     queryKey: ['insights', owner, name],

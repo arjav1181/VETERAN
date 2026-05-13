@@ -102,7 +102,7 @@ function AppRoutes() {
         <Route path=":owner/:repo/pull/:number/files" element={<RepoPullDetail />} />
         <Route path=":owner/:repo/pull/:number/commits" element={<RepoPullDetail />} />
         <Route path=":owner/:repo/actions" element={<RepoActions />} />
-        <Route path=":owner/:repo/actions/workflows/:name" element={<RepoActions />} />
+        <Route path=":owner/:repo/actions/workflows/:repo" element={<RepoActions />} />
         <Route path=":owner/:repo/actions/runs/:id" element={<RepoActionDetail />} />
         <Route path=":owner/:repo/actions/runs/:id/jobs/:jobId" element={<RepoActionDetail />} />
         <Route path=":owner/:repo/projects" element={<RepoProjects />} />

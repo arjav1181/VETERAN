@@ -59,7 +59,7 @@ function mapComment(apiComment: any): any {
 }
 
 export function RepoIssueDetail() {
-  const { owner, name, number } = useParams<{ owner: string; name: string; number: string }>();
+  const p = useParams<{ owner: string; name?: string; repo?: string; number: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || ""; const number = p.number;
   const navigate = useNavigate();
   const issueNumber = Number(number);
 

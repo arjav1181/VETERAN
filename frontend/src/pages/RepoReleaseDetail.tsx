@@ -8,7 +8,7 @@ import { VeteranSkeleton } from '@ui/VeteranSkeleton';
 import { VeteranEmptyState } from '@ui/VeteranEmptyState';
 
 export function RepoReleaseDetail() {
-  const { owner, name, tag } = useParams<{ owner: string; name: string; tag: string }>();
+  const p = useParams<{ owner: string; name?: string; repo?: string; tag: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || ""; const tag = p.tag;
   const navigate = useNavigate();
 
   const { data: release, isLoading, error } = useQuery({

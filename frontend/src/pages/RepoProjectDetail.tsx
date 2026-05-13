@@ -11,7 +11,7 @@ import { VeteranSkeleton } from '@ui/VeteranSkeleton';
 import { VeteranEmptyState } from '@ui/VeteranEmptyState';
 
 export function RepoProjectDetail() {
-  const { owner, name, number } = useParams<{ owner: string; name: string; number: string }>();
+  const p = useParams<{ owner: string; name?: string; repo?: string; number: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || ""; const number = p.number;
   const navigate = useNavigate();
   const [view, setView] = useState<'board' | 'table' | 'roadmap'>('board');
 
@@ -60,7 +60,7 @@ export function RepoProjectDetail() {
     );
   }
 
-  const p = project as any;
+  const projectData = project as any;
   const projectColumns = (columns as any[]) ?? [];
   const projectCards = (cards as any[]) ?? [];
 

@@ -8,7 +8,7 @@ import { VeteranEmptyState } from '@ui/VeteranEmptyState';
 import { useState } from 'react';
 
 export function RepoDiscussions() {
-  const { owner, name } = useParams<{ owner: string; name: string }>();
+  const p = useParams<{ owner: string; name?: string; repo?: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || "";
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('');
 

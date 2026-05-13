@@ -7,7 +7,7 @@ import { VeteranSkeleton } from '@ui/VeteranSkeleton';
 import { VeteranEmptyState } from '@ui/VeteranEmptyState';
 
 export function RepoPackages() {
-  const { owner, name } = useParams<{ owner: string; name: string }>();
+  const p = useParams<{ owner: string; name?: string; repo?: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || "";
 
   const { data: packages, isLoading, error } = useQuery({
     queryKey: ['packages', owner, name],

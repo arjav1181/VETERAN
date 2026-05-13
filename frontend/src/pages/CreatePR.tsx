@@ -9,7 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, GitPullRequest } from 'lucide-react';
 
 export function CreatePR() {
-  const { owner, name } = useParams<{ owner: string; name: string }>();
+  const p = useParams<{ owner: string; name?: string; repo?: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || "";
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');

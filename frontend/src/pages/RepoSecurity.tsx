@@ -14,7 +14,7 @@ const SEVERITY_COLORS: Record<string, string> = {
 };
 
 export function RepoSecurity() {
-  const { owner, name } = useParams<{ owner: string; name: string }>();
+  const p = useParams<{ owner: string; name?: string; repo?: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || "";
 
   const { data: alerts, isLoading, error } = useQuery({
     queryKey: ['security-alerts', owner, name],

@@ -35,7 +35,7 @@ function mapIssue(apiIssue: any): any {
 }
 
 export function RepoIssues() {
-  const { owner, name } = useParams<{ owner: string; name: string }>();
+  const p = useParams<{ owner: string; name?: string; repo?: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || "";
   const navigate = useNavigate();
   const [state, setState] = useState<'open' | 'closed'>('open');
 

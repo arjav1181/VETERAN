@@ -44,7 +44,7 @@ export function RepoWikiPage() {
     );
   }
 
-  const p = page as any;
+  const pageData = page as any;
 
   return (
     <div className="min-h-screen bg-primary-dark">
