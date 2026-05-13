@@ -1,6 +1,6 @@
 import {
   MessageSquare, UserPlus, UserMinus, Tag, Milestone, Lock, Unlock,
-  ClosedIssue, IssueOpened, Pin, PinOff, Bookmark, GitCommit,
+  XCircle, CircleDot, Pin, PinOff, Bookmark, GitCommit,
   ArrowUpFromLine, Pencil, Bell, BellOff, GitPullRequest,
 } from 'lucide-react';
 import { cn, formatRelativeTime } from '@/lib/utils';
@@ -24,8 +24,8 @@ function EventIcon({ eventType }: { eventType: string }) {
     demilestoned: <Milestone size={14} />,
     locked: <Lock size={14} />,
     unlocked: <Unlock size={14} />,
-    closed: <ClosedIssue size={14} />,
-    reopened: <IssueOpened size={14} />,
+    closed: <XCircle size={14} />,
+    reopened: <CircleDot size={14} />,
     pinned: <Pin size={14} />,
     unpinned: <PinOff size={14} />,
     referenced: <GitCommit size={14} />,

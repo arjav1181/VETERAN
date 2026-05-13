@@ -11,6 +11,7 @@ export function parseSemver(version: string): SemVer | null {
   const match = version.match(regex);
 
   if (!match) return null;
+  if (!match[1] || !match[2] || !match[3]) return null;
 
   return {
     major: parseInt(match[1], 10),
@@ -52,8 +53,10 @@ export function compareSemver(a: string | SemVer, b: string | SemVer): number {
   if (preB.length === 0) return -1;
 
   for (let i = 0; i < Math.min(preA.length, preB.length); i++) {
-    const partA = isNaN(Number(preA[i])) ? preA[i] : Number(preA[i]);
-    const partB = isNaN(Number(preB[i])) ? preB[i] : Number(preB[i]);
+    const pA = preA[i] || "";
+    const pB = preB[i] || "";
+    const partA: string | number = isNaN(Number(pA)) ? pA : Number(pA);
+    const partB: string | number = isNaN(Number(pB)) ? pB : Number(pB);
 
     if (partA !== partB) {
       if (typeof partA === "number" && typeof partB === "number") return partA - partB;
@@ -83,7 +86,7 @@ export function satisfies(version: string, range: string): boolean {
   }
 
   const operator = match[1] || "=";
-  const rawMajor = match[2];
+  const rawMajor = match[2] || "*";
   const rawMinor = match[3];
   const rawPatch = match[4];
 
@@ -145,7 +148,8 @@ export function maxSatisfying(versions: string[], range: string): string | null 
   const satisfying = versions.filter(v => satisfies(v, range));
   if (satisfying.length === 0) return null;
 
-  return satisfying.sort((a, b) => compareSemver(b, a))[0];
+  const sorted = [...satisfying].sort((a, b) => compareSemver(b, a));
+  return sorted[0] || null;
 }
 
 export function sortVersions(versions: string[], descending: boolean = true): string[] {

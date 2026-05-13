@@ -5,6 +5,13 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function initials(name: string, fallback: string = '?'): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 0) return fallback;
+  if (parts.length === 1) return (parts[0]?.[0] || fallback).toUpperCase();
+  return ((parts[0]?.[0] || '') + (parts[parts.length - 1]?.[0] || '')).toUpperCase();
+}
+
 export function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
@@ -187,8 +194,6 @@ export function getFileIcon(filename: string): string {
     toml: 'config',
     ini: 'config',
     cfg: 'config',
-    yaml: 'config',
-    yml: 'config',
     env: 'config',
     gitignore: 'git',
     gitattributes: 'git',
@@ -204,7 +209,7 @@ export function getSetiIcon(filename: string): string {
     py: '\ue71c', rb: '\ue21e', rs: '\ue7a8', go: '\ue724',
     java: '\ue738', c: '\ue71e', cpp: '\ue71d', cs: '\ue81c',
     php: '\ue73d', html: '\ue736', css: '\ue749', scss: '\ue74b',
-    json: '\ue60b', xml: '\ue619', yml: '\ue6bd', yaml: '\ue6bd',
+    json: '\ue60b', xml: '\ue619', yaml: '\ue6bd',
     md: '\ue73e', sql: '\ue706', sh: '\ue795', bash: '\ue795',
     svg: '\ue71b', png: '\ue71b', jpg: '\ue71b', jpeg: '\ue71b',
     gif: '\ue71b', webp: '\ue71b', ico: '\ue71b',

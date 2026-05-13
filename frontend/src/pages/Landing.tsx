@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { VeteranButton } from '@ui/VeteranButton';
 import {
-  GitForkHorizontal,
+  GitFork,
   Shield,
   Zap,
   Users,
@@ -66,7 +66,7 @@ export function Landing() {
           <div className="flex items-center justify-between h-16">
             <Link to="/" className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-veteran-500 to-brand-500 flex items-center justify-center">
-                <GitForkHorizontal className="w-4 h-4 text-white" />
+                <GitFork className="w-4 h-4 text-white" />
               </div>
               <span className="font-bold text-xl">VETERAN</span>
             </Link>
@@ -223,7 +223,7 @@ export function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <GitForkHorizontal className="w-5 h-5 text-veteran-500" />
+              <GitFork className="w-5 h-5 text-veteran-500" />
               <span className="font-bold text-sm">VETERAN</span>
             </div>
             <p className="text-xs text-surface-400">

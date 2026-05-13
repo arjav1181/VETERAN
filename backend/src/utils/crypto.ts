@@ -20,7 +20,8 @@ export function generateNumericCode(length: number = 6): string {
   const bytes = crypto.randomBytes(length);
   let code = "";
   for (let i = 0; i < length; i++) {
-    code += (bytes[i] % 10).toString();
+    const byte = bytes[i];
+    if (byte !== undefined) code += (byte % 10).toString();
   }
   return code;
 }
@@ -42,10 +43,7 @@ export function signAccessToken(userId: string, extraPayload: Record<string, unk
   return jwt.sign(
     { sub: userId, type: "access", ...extraPayload },
     env.JWT_SECRET,
-    {
-      expiresIn: env.JWT_ACCESS_EXPIRES_IN,
-      issuer: env.JWT_ISSUER,
-    }
+    { expiresIn: "15m", issuer: env.JWT_ISSUER } as jwt.SignOptions
   );
 }
 
@@ -53,10 +51,7 @@ export function signRefreshToken(userId: string): string {
   return jwt.sign(
     { sub: userId, type: "refresh", tokenId: generateTokenId() },
     env.JWT_SECRET,
-    {
-      expiresIn: env.JWT_REFRESH_EXPIRES_IN,
-      issuer: env.JWT_ISSUER,
-    }
+    { expiresIn: "30d", issuer: env.JWT_ISSUER } as jwt.SignOptions
   );
 }
 
@@ -64,7 +59,7 @@ export function verifyToken(token: string): JwtPayload | null {
   try {
     const decoded = jwt.verify(token, env.JWT_SECRET, {
       issuer: env.JWT_ISSUER,
-    }) as JwtPayload;
+    } as jwt.VerifyOptions) as JwtPayload;
     return decoded;
   } catch {
     return null;
@@ -85,7 +80,7 @@ export function signApiToken(userId: string, tokenId: string): string {
   return jwt.sign(
     { sub: userId, type: "api_token", tokenId },
     env.JWT_SECRET,
-    { expiresIn: "365d" }
+    { expiresIn: "365d" } as jwt.SignOptions
   );
 }
 
@@ -131,7 +126,10 @@ export function encrypt(text: string, key?: string): string {
 export function decrypt(encryptedText: string, key?: string): string {
   const encryptionKey = key || env.ENCRYPTION_KEY || env.JWT_SECRET;
   const keyBuffer = crypto.createHash("sha256").update(encryptionKey).digest();
-  const [ivHex, authTagHex, encrypted] = encryptedText.split(":");
+  const parts = encryptedText.split(":");
+  const ivHex = parts[0] || "";
+  const authTagHex = parts[1] || "";
+  const encrypted = parts.slice(2).join(":");
   const iv = Buffer.from(ivHex, "hex");
   const authTag = Buffer.from(authTagHex, "hex");
   const decipher = crypto.createDecipheriv("aes-256-gcm", keyBuffer, iv);

@@ -31,14 +31,16 @@ export function getCommitDiff(repoPath: string, commitSha: string): UnifiedDiff 
   let totalDeletions = 0;
 
   for (const line of lines) {
-    const [additions, deletions, path] = line.split("\t");
+    const parts = line.split("\t");
+    const additions = parts[0] || "0";
+    const deletions = parts[1] || "0";
+    const path = parts[2] || "";
     const a = parseInt(additions) || 0;
     const d = parseInt(deletions) || 0;
     totalAdditions += a;
     totalDeletions += d;
 
-    const status = a === 0 && d === 0 ? "modified" : "modified";
-    files.push({ path, status, additions: a, deletions: d });
+    files.push({ path, status: "modified", additions: a, deletions: d });
   }
 
   return { files, totalAdditions, totalDeletions, totalFiles: files.length };
@@ -56,7 +58,10 @@ export function getBranchDiff(repoPath: string, baseBranch: string, headBranch: 
   let totalDeletions = 0;
 
   for (const line of lines) {
-    const [additions, deletions, path] = line.split("\t");
+    const parts = line.split("\t");
+    const additions = parts[0] || "0";
+    const deletions = parts[1] || "0";
+    const path = parts[2] || "";
     const a = parseInt(additions) || 0;
     const d = parseInt(deletions) || 0;
     totalAdditions += a;
@@ -88,7 +93,10 @@ export function parseDiffStat(diffOutput: string): DiffFile[] {
   const files: DiffFile[] = [];
 
   for (const line of lines) {
-    const [additions, deletions, path] = line.split("\t");
+    const parts = line.split("\t");
+    const additions = parts[0] || "0";
+    const deletions = parts[1] || "0";
+    const path = parts[2];
     if (!path) continue;
     const a = parseInt(additions) || 0;
     const d = parseInt(deletions) || 0;
@@ -113,11 +121,11 @@ export function getDiffStats(repoPath: string, commitSha: string): { additions: 
     if (!result) return { additions: 0, deletions: 0, fileCount: 0 };
 
     const parts = result.trim().split(", ");
-    const fileCount = parseInt(parts[0]) || 0;
+    const fileCount = parts[0] ? parseInt(parts[0]) : 0;
     const additionsMatch = result.match(/(\d+) insertion/);
     const deletionsMatch = result.match(/(\d+) deletion/);
-    const additions = additionsMatch ? parseInt(additionsMatch[1]) : 0;
-    const deletions = deletionsMatch ? parseInt(deletionsMatch[1]) : 0;
+    const additions = additionsMatch && additionsMatch[1] ? parseInt(additionsMatch[1], 10) : 0;
+    const deletions = deletionsMatch && deletionsMatch[1] ? parseInt(deletionsMatch[1], 10) : 0;
 
     return { additions, deletions, fileCount };
   } catch {

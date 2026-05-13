@@ -13,20 +13,19 @@ interface SecretPattern {
 
 const SECRET_PATTERNS: SecretPattern[] = [
   { name: "AWS Access Key", regex: /AKIA[0-9A-Z]{16}/g, severity: "high" },
-  { name: "AWS Secret Key", regex: /(?i)aws(.{0,20})?(?-i)['\"][0-9a-zA-Z\/+]{40}['\"]/g, severity: "high" },
+  { name: "AWS Secret Key", regex: /aws(.{0,20})?['\"][0-9a-zA-Z\/+]{40}['\"]/gi, severity: "high" },
   { name: "GitHub Token", regex: /(?:gh[pousr]_[A-Za-z0-9_]{36,251}|github_pat_[A-Za-z0-9_]{82,})/g, severity: "high" },
   { name: "GitLab Token", regex: /glpat-[A-Za-z0-9\-_]{20,}/g, severity: "high" },
   { name: "Slack Token", regex: /xox[baprs]-[0-9a-z-]{10,48}/g, severity: "medium" },
   { name: "Private Key", regex: /-----BEGIN\s?(RSA|DSA|EC|OPENSSH|PRIVATE)\s?KEY-----/g, severity: "critical" },
   { name: "JWT Token", regex: /eyJ[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*/g, severity: "medium" },
-  { name: "Password in Code", regex: /(?i)(password|passwd|pwd)\s*[:=]\s*['\"][^'\"]{3,}['\"]/g, severity: "medium" },
-  { name: "API Key", regex: /(?i)(api[_-]?key|apikey)\s*[:=]\s*['\"][A-Za-z0-9_\-]{16,}['\"]/g, severity: "high" },
-  { name: "Secret in Code", regex: /(?i)(secret)\s*[:=]\s*['\"][A-Za-z0-9_\-!@#$%^&*()]{8,}['\"]/g, severity: "high" },
-  { name: "Connection String", regex: /(?:mongodb|postgres|mysql|redis):\/\/[^\s'"]+/g, severity: "medium" },
+  { name: "Password in Code", regex: /(password|passwd|pwd)\s*[:=]\s*['\"][^'\"]{3,}['\"]/gi, severity: "medium" },
+  { name: "API Key", regex: /(api[_-]?key|apikey)\s*[:=]\s*['\"][A-Za-z0-9_\-]{16,}['\"]/gi, severity: "high" },
+  { name: "Secret in Code", regex: /(secret)\s*[:=]\s*['\"][A-Za-z0-9_\-!@#$%^&*()]{8,}['\"]/gi, severity: "high" },
+  { name: "Connection String", regex: /(mongodb|postgres|mysql|redis):\/\/[^\s'"]+/gi, severity: "medium" },
   { name: "npm Token", regex: /npm_[A-Za-z0-9]{36,}/g, severity: "high" },
   { name: "Google API Key", regex: /AIza[0-9A-Za-z\-_]{35}/g, severity: "medium" },
   { name: "Heroku API Key", regex: /[hH][eE][rR][oO][kK][uU].*[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}/g, severity: "high" },
-  { name: "Generic Token", regex: /token\s*[:=]\s*['\"][A-Za-z0-9_\-]{20,}['\"]/gi, severity: "low" },
 ];
 
 export interface ScanResult {
@@ -64,7 +63,7 @@ export class SecurityService {
 
           const lines = content.split("\n");
           for (let lineNum = 0; lineNum < lines.length; lineNum++) {
-            const line = lines[lineNum];
+            const line = lines[lineNum] || "";
             for (const pattern of SECRET_PATTERNS) {
               const matches = line.matchAll(pattern.regex);
               for (const match of matches) {

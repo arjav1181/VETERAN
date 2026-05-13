@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import {
-  IssueOpened, IssueClosed, CheckCircle, XCircle, Tag, User, Milestone,
+  CircleDot, CheckCircle, CheckCircle, XCircle, Tag, User, Milestone,
   MessageSquare, ChevronDown, SortAsc, Search, Square, CheckSquare,
 } from 'lucide-react';
 import { cn, formatRelativeTime, formatCount } from '@/lib/utils';
@@ -43,7 +43,7 @@ function LoadingSkeleton() {
 function EmptyState({ state, search, hasFilters }: { state: string; search: string; hasFilters: boolean }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-text-muted">
-      {state === 'open' ? <IssueOpened size={48} className="mb-4 opacity-30" /> : <IssueClosed size={48} className="mb-4 opacity-30" />}
+      {state === 'open' ? <CircleDot size={48} className="mb-4 opacity-30" /> : <CheckCircle size={48} className="mb-4 opacity-30" />}
       <p className="text-lg font-medium text-text-primary mb-1">
         {search || hasFilters ? 'No matching issues found' : `No ${state} issues`}
       </p>
@@ -122,7 +122,7 @@ export function IssueList({
                   state === 'open' ? 'bg-accent/20 text-accent' : 'text-text-muted hover:text-text-primary'
                 )}
               >
-                <IssueOpened size={14} /> Open
+                <CircleDot size={14} /> Open
               </button>
               <button
                 onClick={() => onStateChange('closed')}
@@ -229,9 +229,9 @@ export function IssueList({
                   <Square size={14} />
                 </button>
                 {issue.state === 'open' ? (
-                  <IssueOpened size={18} className="text-success mt-0.5 shrink-0" />
+                  <CircleDot size={18} className="text-success mt-0.5 shrink-0" />
                 ) : (
-                  <IssueClosed size={18} className="text-text-muted mt-0.5 shrink-0" />
+                  <CheckCircle size={18} className="text-text-muted mt-0.5 shrink-0" />
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">

@@ -74,15 +74,15 @@ export function errorHandler(err: Error, _req: Request, res: Response, _next: Ne
     return;
   }
 
-  if (err instanceof Prisma.PrismaClientKnownRequestError) {
-    if (err.code === "P2002") {
+  if (err.constructor.name === "PrismaClientKnownRequestError") {
+    if ((err as { code?: string }).code === "P2002") {
       res.status(409).json({
         message: "Resource already exists",
         code: "CONFLICT",
       });
       return;
     }
-    if (err.code === "P2025") {
+    if ((err as { code?: string }).code === "P2025") {
       res.status(404).json({
         message: "Resource not found",
         code: "NOT_FOUND",

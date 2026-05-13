@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import {
-  IssueOpened, IssueClosed, Lock, Unlock, Pin, PinOff, ArrowUpFromLine,
+  CircleDot, CheckCircle, Lock, Unlock, Pin, PinOff, ArrowUpFromLine,
   MessageSquare, Bell, BellOff, Link, SmilePlus, ThumbsUp, ThumbsDown,
   Laugh, Heart, Rocket, Eye, Share2, Edit3, MoreHorizontal,
 } from 'lucide-react';
@@ -76,7 +76,7 @@ export function IssueDetail({
               'flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
               issue.state === 'open' ? 'bg-success/20 text-success' : 'bg-text-muted/20 text-text-muted'
             )}>
-              {issue.state === 'open' ? <IssueOpened size={14} /> : <IssueClosed size={14} />}
+              {issue.state === 'open' ? <CircleDot size={14} /> : <CheckCircle size={14} />}
               {issue.state}
             </span>
             <span>{issue.authorUsername} opened this issue {formatRelativeTime(issue.createdAt)}</span>
@@ -183,7 +183,7 @@ export function IssueDetail({
                   : 'bg-success/20 text-success hover:bg-success/30'
               )}
             >
-              {issue.state === 'open' ? <IssueClosed size={16} /> : <IssueOpened size={16} />}
+              {issue.state === 'open' ? <CheckCircle size={16} /> : <CircleDot size={16} />}
               {issue.state === 'open' ? 'Close issue' : 'Reopen issue'}
             </button>
           </div>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Star, GitFork, Eye, Lock, Globe, Shield, Heart, Copy, Check,
-  Book, Code, IssueOpened, GitPullRequest, Play, SquareKanban, BookOpen,
+  Book, Code, CircleDot, GitPullRequest, Play, SquareKanban, BookOpen,
   MessageSquare, ShieldCheck, BarChart3, Package, Settings, ChevronDown,
 } from 'lucide-react';
 import { cn, formatCount } from '@/lib/utils';
@@ -24,7 +24,7 @@ interface RepoHeaderProps {
 
 const TABS = [
   { id: 'code', label: 'Code', icon: Code, path: '' },
-  { id: 'issues', label: 'Issues', icon: IssueOpened, path: '/issues' },
+  { id: 'issues', label: 'Issues', icon: CircleDot, path: '/issues' },
   { id: 'pulls', label: 'Pull Requests', icon: GitPullRequest, path: '/pulls' },
   { id: 'actions', label: 'Actions', icon: Play, path: '/actions' },
   { id: 'projects', label: 'Projects', icon: SquareKanban, path: '/projects' },

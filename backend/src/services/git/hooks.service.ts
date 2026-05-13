@@ -93,7 +93,7 @@ export class HooksService {
           input: hookInput,
           stdio: "pipe",
           timeout: 60000,
-        }).catch(() => {});
+        });
       } catch {
         // Post-receive hooks should not block
       }

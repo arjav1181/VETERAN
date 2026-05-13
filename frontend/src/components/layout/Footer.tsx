@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { GitForkHorizontal } from 'lucide-react';
+import { GitFork } from 'lucide-react';
 
 export function Footer() {
   return (
@@ -9,7 +9,7 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-3">
-              <GitForkHorizontal className="w-5 h-5 text-veteran-500" />
+              <GitFork className="w-5 h-5 text-veteran-500" />
               <span className="font-bold text-sm">VETERAN</span>
             </div>
             <p className="text-xs text-surface-500 leading-relaxed">

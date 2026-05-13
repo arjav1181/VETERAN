@@ -106,8 +106,8 @@ export class OAuthService {
       throw new AppError("Failed to exchange OAuth code", 400, "OAUTH_FAILED");
     }
 
-    const tokenData = await tokenResponse.json();
-    const accessToken = tokenData.access_token;
+    const tokenData = (await tokenResponse.json()) as Record<string, unknown>;
+    const accessToken = tokenData.access_token as string;
 
     const userResponse = await fetch(config.userInfoUrl, {
       headers: {
@@ -120,7 +120,8 @@ export class OAuthService {
       throw new AppError("Failed to fetch user info", 400, "OAUTH_FAILED");
     }
 
-    const profile: OAuthProfile = await this.mapProfile(provider, await userResponse.json());
+    const rawProfile = (await userResponse.json()) as Record<string, unknown>;
+    const profile: OAuthProfile = await this.mapProfile(provider, rawProfile);
 
     let oauthAccount = await prisma.oAuthAccount.findUnique({
       where: { provider_providerId: { provider: profile.provider, providerId: profile.providerId } },

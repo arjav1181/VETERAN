@@ -10,15 +10,16 @@ export function requestLogger(req: Request, res: Response, next: NextFunction): 
     const { statusCode } = res;
     const level = statusCode >= 500 ? "error" : statusCode >= 400 ? "warn" : "info";
 
-    logger[level]({
+    const logFn = logger[level] as (msg: string, ...args: unknown[]) => void;
+    logFn(`${method} ${url} ${statusCode} ${duration}ms`, {
       method,
       url,
       statusCode,
       duration: `${duration}ms`,
       ip,
       userAgent: req.headers["user-agent"],
-      userId: req.user?.id,
-    }, `${method} ${url} ${statusCode} ${duration}ms`);
+      userId: (req as unknown as Record<string, unknown>).user ? ((req as unknown as Record<string, unknown>).user as Record<string, unknown>).id : undefined,
+    });
   });
 
   next();

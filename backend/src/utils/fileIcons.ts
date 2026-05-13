@@ -26,9 +26,8 @@ const fileIconMap: Record<string, string> = {
   sql: "database",
   graphql: "graphql",
   gql: "graphql",
-  prisma: "prisma",
-  swift: "swift",
-  dart: "dart",
+   prisma: "prisma",
+   dart: "dart",
   lua: "lua",
   r: "r",
   pl: "perl",
@@ -154,9 +153,8 @@ const fileNameMap: Record<string, string> = {
   "tailwind.config.js": "tailwind",
   "tailwind.config.ts": "tailwind",
   ".env": "env",
-  ".env.example": "env",
-  "Dockerfile": "docker",
-};
+   ".env.example": "env",
+ };
 
 export function getFileIcon(filename: string): string {
   const nameMatch = fileNameMap[filename];

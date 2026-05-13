@@ -1,3 +1,7 @@
+import { env } from "./env.js";
+
+export const IS_SELF_HOSTED = env.SELF_HOSTED;
+
 export const APP_NAME = "VETERAN";
 export const APP_VERSION = "1.0.0";
 export const APP_DESCRIPTION = "VETERAN Git Platform";
@@ -8,30 +12,37 @@ export const API_PREFIX = `/api/${API_VERSION}`;
 export const GIT_PROTOCOL = "smart";
 export const GIT_USER_AGENT = "VETERAN-Git/1.0.0";
 
-export const PAGINATION_DEFAULT_PER_PAGE = 30;
-export const PAGINATION_MAX_PER_PAGE = 100;
+export const PAGINATION_DEFAULT_PER_PAGE = Number(process.env.PAGINATION_DEFAULT_PER_PAGE) || 30;
+export const PAGINATION_MAX_PER_PAGE = Number(process.env.PAGINATION_MAX_PER_PAGE) || 100;
 
-export const TOKEN_BYTES = 32;
+export const TOKEN_BYTES = Number(process.env.TOKEN_BYTES) || 32;
 export const TOKEN_ENCODING = "hex" as const;
-export const REFRESH_TOKEN_BYTES = 48;
-export const API_TOKEN_BYTES = 40;
+export const REFRESH_TOKEN_BYTES = Number(process.env.REFRESH_TOKEN_BYTES) || 48;
+export const API_TOKEN_BYTES = Number(process.env.API_TOKEN_BYTES) || 40;
 
-export const BCRYPT_ROUNDS = 12;
+export const BCRYPT_ROUNDS = env.SELF_HOSTED
+  ? Number(process.env.BCRYPT_ROUNDS) || 10
+  : Number(process.env.BCRYPT_ROUNDS) || 12;
 
 export const DEFAULT_AVATAR = "/avatars/default.png";
-export const MAX_FILE_SIZE = 100 * 1024 * 1024;
-export const MAX_UPLOAD_SIZE = 50 * 1024 * 1024;
-export const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
-export const MAX_ARCHIVE_SIZE = 500 * 1024 * 1024;
+export const MAX_FILE_SIZE =
+  (Number(process.env.MAX_FILE_SIZE_MB) || 100) * 1024 * 1024;
+export const MAX_UPLOAD_SIZE =
+  (Number(process.env.MAX_UPLOAD_SIZE_MB) || 50) * 1024 * 1024;
+export const MAX_IMAGE_SIZE =
+  (Number(process.env.MAX_IMAGE_SIZE_MB) || 5) * 1024 * 1024;
+export const MAX_ARCHIVE_SIZE =
+  (Number(process.env.MAX_ARCHIVE_SIZE_MB) || 500) * 1024 * 1024;
 
-export const LFS_MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024;
-export const LFS_BATCH_SIZE = 100;
+export const LFS_MAX_FILE_SIZE =
+  (Number(process.env.LFS_MAX_FILE_SIZE_GB) || 2) * 1024 * 1024 * 1024;
+export const LFS_BATCH_SIZE = Number(process.env.LFS_BATCH_SIZE) || 100;
 
 export const CACHE_TTL = {
-  SHORT: 60,
-  MEDIUM: 300,
-  LONG: 3600,
-  DAY: 86400,
+  SHORT: Number(process.env.CACHE_TTL_SHORT) || 60,
+  MEDIUM: Number(process.env.CACHE_TTL_MEDIUM) || 300,
+  LONG: Number(process.env.CACHE_TTL_LONG) || 3600,
+  DAY: Number(process.env.CACHE_TTL_DAY) || 86400,
 } as const;
 
 export const ISSUE_STATES = ["open", "closed"] as const;
@@ -81,5 +92,5 @@ export const NOTIFICATION_TYPES = [
   "security_alert", "ci", "mention", "review",
 ] as const;
 
-export const DEFAULT_PAGE_SIZE = 30;
-export const MAX_PAGE_SIZE = 100;
+export const DEFAULT_PAGE_SIZE = PAGINATION_DEFAULT_PER_PAGE;
+export const MAX_PAGE_SIZE = PAGINATION_MAX_PER_PAGE;

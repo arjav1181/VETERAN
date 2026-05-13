@@ -12,7 +12,7 @@ import {
   Moon,
   Sun,
   Plus,
-  GitForkHorizontal,
+  GitFork,
   LogOut,
   Settings,
   User,
@@ -46,7 +46,7 @@ export function Header({ onMenuClick, onCommandPalette }: HeaderProps) {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 flex-shrink-0">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-veteran-500 to-brand-500 flex items-center justify-center">
-            <GitForkHorizontal className="w-4 h-4 text-white" />
+            <GitFork className="w-4 h-4 text-white" />
           </div>
           <span className="font-bold text-lg hidden sm:inline">VETERAN</span>
         </Link>
@@ -73,7 +73,7 @@ export function Header({ onMenuClick, onCommandPalette }: HeaderProps) {
                   </button>
                 }
                 items={[
-                  { id: 'new-repo', label: 'New repository', icon: <GitForkHorizontal className="w-4 h-4" />, onClick: () => {} },
+                  { id: 'new-repo', label: 'New repository', icon: <GitFork className="w-4 h-4" />, onClick: () => {} },
                   { id: 'new-org', label: 'New organization', icon: <User className="w-4 h-4" />, onClick: () => {} },
                 ]}
               />

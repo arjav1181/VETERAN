@@ -6,7 +6,7 @@ import { VeteranTooltip } from '@ui/VeteranTooltip';
 import {
   Home,
   Compass,
-  GitForkHorizontal,
+  GitFork,
   GitPullRequest,
   Bug,
   BookOpen,
@@ -33,7 +33,7 @@ const mainNavItems = [
 ];
 
 const workItems = [
-  { id: 'repos', label: 'Repositories', icon: GitForkHorizontal, path: '/dashboard?tab=repos' },
+  { id: 'repos', label: 'Repositories', icon: GitFork, path: '/dashboard?tab=repos' },
   { id: 'issues', label: 'Issues', icon: Bug, path: '/dashboard?tab=issues' },
   { id: 'pulls', label: 'Pull Requests', icon: GitPullRequest, path: '/dashboard?tab=pulls' },
   { id: 'projects', label: 'Projects', icon: BarChart3, path: '/dashboard?tab=projects' },

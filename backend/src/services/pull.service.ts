@@ -241,8 +241,12 @@ export class PullService {
       execSync(`git push origin ${pr.baseBranch}`, { cwd: repoPath, stdio: "pipe" });
 
       if (repo.deleteBranchOnMerge) {
-        execSync(`git branch -D "${pr.headBranch}"`, { cwd: repoPath, stdio: "pipe" }).catch(() => {});
-        execSync(`git push origin --delete "${pr.headBranch}"`, { cwd: repoPath, stdio: "pipe" }).catch(() => {});
+        try {
+          execSync(`git branch -D "${pr.headBranch}"`, { cwd: repoPath, stdio: "pipe" });
+        } catch {}
+        try {
+          execSync(`git push origin --delete "${pr.headBranch}"`, { cwd: repoPath, stdio: "pipe" });
+        } catch {}
       }
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : "Merge failed";

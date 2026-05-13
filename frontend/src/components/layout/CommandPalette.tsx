@@ -4,7 +4,7 @@ import { cn } from '../../lib/utils';
 import { useNavigate } from 'react-router-dom';
 import {
   Search,
-  GitForkHorizontal,
+  GitFork,
   Bug,
   GitPullRequest,
   Users,
@@ -49,7 +49,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const commands: CommandItem[] = [
     { id: 'go-dashboard', label: 'Go to Dashboard', icon: <Home className="w-4 h-4" />, category: 'Navigation', action: () => { navigate('/dashboard'); onClose(); }, shortcut: '⌘H' },
     { id: 'go-explore', label: 'Go to Explore', icon: <Compass className="w-4 h-4" />, category: 'Navigation', action: () => { navigate('/explore'); onClose(); } },
-    { id: 'go-repos', label: 'Go to Repositories', icon: <GitForkHorizontal className="w-4 h-4" />, category: 'Navigation', action: () => { navigate('/dashboard?tab=repos'); onClose(); } },
+    { id: 'go-repos', label: 'Go to Repositories', icon: <GitFork className="w-4 h-4" />, category: 'Navigation', action: () => { navigate('/dashboard?tab=repos'); onClose(); } },
     { id: 'go-issues', label: 'Go to Issues', icon: <Bug className="w-4 h-4" />, category: 'Navigation', action: () => { navigate('/dashboard?tab=issues'); onClose(); } },
     { id: 'go-pulls', label: 'Go to Pull Requests', icon: <GitPullRequest className="w-4 h-4" />, category: 'Navigation', action: () => { navigate('/dashboard?tab=pulls'); onClose(); } },
     { id: 'go-settings', label: 'Go to Settings', icon: <Settings className="w-4 h-4" />, category: 'Navigation', action: () => { navigate('/settings'); onClose(); } },

@@ -16,7 +16,7 @@ export class CodespaceService {
       throw new AppError("Invalid machine type", 400, "INVALID_MACHINE");
     }
 
-    const count = await prisma.codespace.count({ where: { userId, state: { notIn: ["deleted", "stopped"] } } });
+    const count = await prisma.codespace.count({ where: { userId: data.userId, state: { notIn: ["deleted", "stopped"] } } });
     if (count >= 5) {
       throw new AppError("Maximum active codespace limit reached", 403, "CODESPACE_LIMIT");
     }

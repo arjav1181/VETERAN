@@ -1,13 +1,9 @@
 import type { Components } from 'react-markdown';
 import type { PluggableList } from 'react-markdown';
 
-export const markdownPlugins: PluggableList = [
-  [require('remark-gfm'), { singleTilde: false }],
-];
+export const markdownPlugins: PluggableList = [];
 
-export const rehypePlugins: PluggableList = [
-  [require('rehype-highlight'), { ignoreMissing: true }],
-];
+export const rehypePlugins: PluggableList = [];
 
 export const markdownComponents: Components = {
   h1: ({ children, ...props }) => (
@@ -36,13 +32,7 @@ export const markdownComponents: Components = {
     </p>
   ),
   a: ({ children, href, ...props }) => (
-    <a
-      href={href}
-      className="text-veteran-600 dark:text-veteran-400 hover:underline"
-      target="_blank"
-      rel="noopener noreferrer"
-      {...props}
-    >
+    <a href={href} className="text-veteran-600 dark:text-veteran-400 hover:underline" target="_blank" rel="noopener noreferrer" {...props}>
       {children}
     </a>
   ),
@@ -83,7 +73,7 @@ export const markdownComponents: Components = {
       </pre>
     );
   },
-  pre: ({ children, ...props }) => <>{children}</>,
+  pre: ({ children }) => <>{children}</>,
   table: ({ children, ...props }) => (
     <div className="overflow-x-auto my-4">
       <table className="min-w-full border-collapse border border-surface-300 dark:border-surface-600" {...props}>
@@ -109,5 +99,5 @@ export const markdownComponents: Components = {
   img: ({ src, alt, ...props }) => (
     <img src={src} alt={alt} className="max-w-full rounded-lg my-4" loading="lazy" {...props} />
   ),
-  hr: ({ ...props }) => <hr className="my-6 border-surface-300 dark:border-surface-600" {...props} />,
+  hr: (props) => <hr className="my-6 border-surface-300 dark:border-surface-600" {...props} />,
 };
