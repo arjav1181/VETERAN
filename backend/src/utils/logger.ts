@@ -2,12 +2,17 @@ import winston from "winston";
 import pino from "pino";
 import { env } from "../config/env.js";
 
-const pinoLogger = pino({
-  level: env.LOG_LEVEL,
-  transport: env.NODE_ENV === "development"
-    ? { target: "pino-pretty", options: { colorize: true } }
-    : undefined,
-});
+let pinoLogger: pino.Logger;
+try {
+  pinoLogger = pino({
+    level: env.LOG_LEVEL,
+    transport: env.NODE_ENV === "development"
+      ? { target: "pino-pretty", options: { colorize: true } }
+      : undefined,
+  });
+} catch {
+  pinoLogger = pino({ level: env.LOG_LEVEL });
+}
 
 const winstonLogger = winston.createLogger({
   level: env.LOG_LEVEL,

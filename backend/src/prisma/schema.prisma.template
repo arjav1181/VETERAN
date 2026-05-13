@@ -1,9 +1,9 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "sqlite"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "__DATABASE_PROVIDER__"
   url      = env("DATABASE_URL")
 }
 
@@ -153,7 +153,7 @@ model ApiToken {
   userId    String
   name      String
   token     String   @unique
-  scopes    String[]
+  scopes    String  @default("[]")
   expiresAt DateTime?
   lastUsedAt DateTime?
   createdAt DateTime @default(now())
@@ -200,7 +200,7 @@ model OrgMember {
   organizationId String
   userId         String
   role           String   @default("member") // owner, admin, member, billing
-  permissions    String[] @default([])
+  permissions    String  @default("[]")
   createdAt      DateTime @default(now())
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -288,7 +288,7 @@ model Repository {
   openIssuesCount Int    @default(0)
   openPrCount   Int      @default(0)
   license       String?
-  topics        String[] @default([])
+  topics        String  @default("[]")
   allowForking  Boolean  @default(true)
   allowIssues   Boolean  @default(true)
   allowProjects Boolean  @default(true)
@@ -305,7 +305,7 @@ model Repository {
   owner         User             @relation("RepoOwner", fields: [ownerId], references: [id])
   organization  Organization?    @relation("OrgRepo", fields: [organizationId], references: [id])
   collaborators RepoCollaborator[]
-  repoTopicRefs RepoTopic[]
+  repoTopics RepoTopic[]
   branches      Branch[]
   branchProtections BranchProtection[]
   tags          Tag[]
@@ -394,7 +394,7 @@ model BranchProtection {
   repositoryId          String
   branch                String   @default("*")
   requiredReviews       Int      @default(0)
-  requiredStatusChecks  String[] @default([])
+  requiredStatusChecks  String  @default("[]")
   requiredConversation  Boolean  @default(false)
   enforceAdmins         Boolean  @default(false)
   dismissStaleReviews   Boolean  @default(false)
@@ -487,7 +487,7 @@ model Commit {
   committerEmail String
   committedAt  DateTime
   treeSha      String
-  parentShas   String[] @default([])
+  parentShas   String  @default("[]")
   additions    Int      @default(0)
   deletions    Int      @default(0)
   fileCount    Int      @default(0)
@@ -497,8 +497,8 @@ model Commit {
   repository   Repository         @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
   author       User?              @relation(fields: [authorId], references: [id])
   statuses     CommitStatus[]
-  parents      Commit[]           @relation("ParentCommit")
-  children     Commit[]           @relation("ChildCommit")
+  parentCommits  Commit[]  @relation("ParentCommit")
+  childCommits   Commit[]  @relation("ChildCommit")
   checkSuites  CheckSuite[]
   prCommits    PrCommit[]
 
@@ -513,8 +513,8 @@ model CommitParents {
   commitId    String
   parentId    String
 
-  child  Commit @relation("ParentCommit", fields: [commitId], references: [id], onDelete: Cascade)
-  parent Commit @relation("ChildCommit", fields: [parentId], references: [id], onDelete: Cascade)
+  childCommit  Commit @relation("ChildCommit", fields: [commitId], references: [id], onDelete: Cascade)
+  parentCommit Commit @relation("ParentCommit", fields: [parentId], references: [id], onDelete: Cascade)
 
   @@id([commitId, parentId])
   @@map("commit_parents")
@@ -574,9 +574,9 @@ model CheckRun {
   title        String?
   summary      String?
   text         String?
-  annotations  Json?
-  images       Json?
-  actions      Json?
+  annotations  String?
+  images       String?
+  actions      String?
   creatorId    String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -599,7 +599,7 @@ model Issue {
   authorId      String
   milestoneId   String?
   assigneeId    String?
-  labelsList    String[] @default([])
+  labelsList    String  @default("[]")
   pullRequestId String? @unique
   duplicateOfId String?
   createdAt     DateTime @default(now())
@@ -702,7 +702,7 @@ model IssueMilestone {
   updatedAt    DateTime @updatedAt
 
   repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  closedBy   User?      @relation("MilestoneClosedBy", fields: [closedById], references: [id])
+  closedBy   User?      @relation(fields: [closedById], references: [id])
   issues     Issue[]
 
   @@unique([repositoryId, number])
@@ -714,8 +714,8 @@ model IssueEvent {
   id        String   @id @default(cuid())
   issueId   String
   actorId   String
-  event     String   // closed, reopened, assigned, unassigned, labeled, unlabeled, milestoned, demilestoned, locked, unlocked, referenced, mentioned, subscribed
-  data      Json?
+  event     String
+  data      String?
   createdAt DateTime @default(now())
 
   issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
@@ -754,7 +754,7 @@ model PullRequest {
   rebaseable      Boolean  @default(true)
   autoMergeEnabled Boolean @default(false)
   autoMergeMethod  String?
-  labelsList      String[] @default([])
+  labelsList      String   @default("[]")
   milestoneId     String?
   draftAt         DateTime?
   createdAt       DateTime @default(now())
@@ -782,15 +782,15 @@ model PullRequest {
 }
 
 model PrReview {
-  id           String   @id @default(cuid())
+  id            String   @id @default(cuid())
   pullRequestId String
-  reviewerId   String
-  body         String?
-  state        String   // approved, changes_requested, commented, dismissed, pending
-  commitSha    String?
-  submittedAt  DateTime @default(now())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  reviewerId    String
+  body          String?
+  state         String
+  commitSha     String?
+  submittedAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   pullRequest PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
   reviewer    User        @relation(fields: [reviewerId], references: [id])
@@ -827,8 +827,8 @@ model PrReviewEvent {
   id            String   @id @default(cuid())
   pullRequestId String
   actorId       String
-  event         String   // approved, changes_requested, commented, dismissed, head_ref_deleted, head_ref_restored, merged, auto_merge_enabled, auto_merge_disabled
-  data          Json?
+  event         String
+  data          String?
   createdAt     DateTime @default(now())
 
   pullRequest PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
@@ -873,7 +873,7 @@ model Webhook {
   url           String
   contentType   String   @default("json")
   secret        String?
-  events        String[] @default([])
+  events        String   @default("[]")
   isActive      Boolean  @default(true)
   sslVerify     Boolean  @default(true)
   lastDelivery  DateTime?
@@ -895,7 +895,7 @@ model WebhookDelivery {
   id           String   @id @default(cuid())
   webhookId    String
   event        String
-  payload      Json
+  payload      String   @default("{}")
   responseCode Int?
   responseBody String?
   status       String   @default("pending")
@@ -913,10 +913,10 @@ model WebhookDelivery {
 model Notification {
   id        String   @id @default(cuid())
   userId    String
-  type      String   // issue, pull_request, release, discussion, security_alert, ci, mention, review
+  type      String
   title     String
   body      String?
-  data      Json?
+  data      String?
   isRead    Boolean  @default(false)
   repoId    String?
   actorId   String?
@@ -1201,7 +1201,7 @@ model CiPipeline {
   status        String   @default("pending") // pending, running, passed, failed, cancelled, skipped
   triggeredBy   String?  // webhook, manual, schedule, pr
   creatorId     String?
-  config        Json?
+  config        String?
   startedAt     DateTime?
   finishedAt    DateTime?
   duration      Int?
@@ -1226,8 +1226,8 @@ model CiJob {
   conclusion  String?
   runnerLabel String?
   image       String?
-  commands    String[]
-  env         Json?
+  commands    String  @default("[]")
+  env         String?
   startedAt   DateTime?
   finishedAt  DateTime?
   duration    Int?
@@ -1305,7 +1305,7 @@ model PackageVersion {
   id          String   @id @default(cuid())
   packageId   String
   version     String
-  metadata    Json?
+  metadata    String?
   fileUrl     String?
   sha256      String?
   size        Int      @default(0)
@@ -1343,7 +1343,7 @@ model AuditLog {
   action    String
   target    String?
   targetId  String?
-  data      Json?
+  data      String?
   ipAddress String?
   createdAt DateTime @default(now())
 
@@ -1360,7 +1360,7 @@ model AuditLog {
 model AdminSetting {
   id        String   @id @default(cuid())
   key       String   @unique
-  value     Json
+  value     String
   updatedAt DateTime @updatedAt
 
   @@map("admin_settings")
@@ -1457,13 +1457,12 @@ model LfsLock {
   repositoryId String
   path        String
   ownerId     String
-  lockedById  String?
   lockTier    String   @default("default") // default, strict, sticky
   createdAt   DateTime @default(now())
 
   repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
   owner      Organization? @relation(fields: [ownerId], references: [id])
-  lockedBy   User?       @relation(fields: [lockedById], references: [id])
+  lockedBy   User?       @relation("LfsLockUser", fields: [id], references: [id])
 
   @@unique([repositoryId, path])
   @@index([repositoryId])
@@ -1498,8 +1497,8 @@ model IntegrationInstallation {
   integrationId String
   targetId      String   // org or user id
   targetType    String   // organization, user
-  permissions   Json?
-  events        String[] @default([])
+  permissions   String  @default("{}")
+  events        String  @default("[]")
   token         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

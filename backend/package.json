@@ -4,17 +4,18 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "build": "tsc",
+    "dev": "npm run prepare-schema && tsx watch src/server.ts",
+    "build": "npm run prepare-schema && tsc",
     "start": "node dist/server.js",
     "lint": "echo lint ok",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
-    "db:seed": "tsx src/prisma/seed.ts"
+    "prepare-schema": "node scripts/prepare-schema.mjs",
+    "db:generate": "npm run prepare-schema && prisma generate",
+    "db:push": "npm run prepare-schema && prisma db push",
+    "db:migrate": "npm run prepare-schema && prisma migrate dev",
+    "db:seed": "npm run prepare-schema && tsx src/prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.14.0",
