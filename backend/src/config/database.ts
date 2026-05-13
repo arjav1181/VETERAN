@@ -13,12 +13,15 @@ prisma = new PrismaClient({
   log: getLogLevels(),
 });
 
-// Strip include and _count from all queries to prevent runtime errors
+// Strip relations and _count from all queries to prevent runtime errors
 // when relations don't exist in the schema (SQLite compatibility)
 prisma.$use(async (params, next) => {
   if (params.args) {
     delete params.args.include;
     delete params.args._count;
+    if (params.args.select && typeof params.args.select === 'object') {
+      delete (params.args.select as Record<string, unknown>)._count;
+    }
   }
   return next(params);
 });
