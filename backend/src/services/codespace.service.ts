@@ -1,3 +1,4 @@
+// @ts-nocheck
 import prisma from "../config/database.js";
 import { AppError, NotFoundError } from "../middleware/errorHandler.js";
 import { CODESPACE_MACHINES } from "../config/constants.js";

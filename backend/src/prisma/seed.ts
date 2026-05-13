@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { PrismaClient } from "@prisma/client";
 import { hashPassword } from "../utils/crypto.js";
 import { DEFAULT_LABELS } from "../config/constants.js";

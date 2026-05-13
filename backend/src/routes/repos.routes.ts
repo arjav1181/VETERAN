@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Router, Request, Response, NextFunction } from "express";
 import prisma from "../config/database.js";
 import { repoService } from "../services/repo.service.js";

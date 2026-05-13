@@ -13,15 +13,15 @@ function getSocket(): Socket | null {
 }
 
 export function useRealtime() {
-  const session = useAuthStore((s) => s.session);
+  const accessToken = useAuthStore((s) => s.accessToken);
   const queryClient = useQueryClient();
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    if (!session?.access_token) return;
+    if (!accessToken) return;
 
     const socket = io(SOCKET_URL, {
-      auth: { token: session.access_token },
+      auth: { token: accessToken },
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 10,
@@ -85,7 +85,7 @@ export function useRealtime() {
       socketRef.current = null;
       globalSocket = null;
     };
-  }, [session?.access_token, queryClient]);
+  }, [accessToken, queryClient]);
 
   const emit = useCallback((event: string, data?: unknown) => {
     socketRef.current?.emit(event, data);

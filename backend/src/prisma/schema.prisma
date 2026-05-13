@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -29,71 +29,6 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  sessions            Session[]
-  oauthAccounts       OAuthAccount[]
-  sshKeys             SshKey[]
-  apiTokens           ApiToken[]
-  orgMembers          OrgMember[]
-  teamMembers         TeamMember[]
-  ownedRepositories   Repository[]       @relation("RepoOwner")
-  repoCollaborators   RepoCollaborator[]
-  repoTopics          RepoTopic[]
-  branches            Branch[]
-  branchProtections   BranchProtection[]
-  tags                Tag[]
-  releases            Release[]
-  releaseAssets       ReleaseAsset[]
-  commits             Commit[]
-  commitStatuses      CommitStatus[]
-  checkRuns           CheckRun[]
-  checkSuites         CheckSuite[]
-  issues              Issue[]            @relation("IssueAuthor")
-  assignedIssues      IssueAssignee[]
-  issueComments       IssueComment[]
-  issueReactions      IssueReaction[]
-  issueLabels         IssueLabel[]
-  issueMilestones     IssueMilestone[]
-  issueEvents         IssueEvent[]
-  pullRequests        PullRequest[]      @relation("PrAuthor")
-  prReviews           PrReview[]
-  prReviewComments    PrReviewComment[]
-  prReviewEvents      PrReviewEvent[]
-  prCommits           PrCommit[]
-  prCheckResults      PrCheckResult[]
-  webhooks            Webhook[]
-  webhookDeliveries   WebhookDelivery[]
-  notifications       Notification[]
-  notificationSubs    NotificationSubscription[]
-  discussionPosts     Discussion[]
-  discussionComments  DiscussionComment[]
-  discussionVotes     DiscussionVote[]
-  stars               Star[]
-  watches             Watch[]
-  forks               Fork[]
-  followers           Follow[]           @relation("FollowTarget")
-  following           Follow[]           @relation("FollowSource")
-  wikiPages           WikiPage[]
-  wikiRevisions       WikiRevision[]
-  projects            Project[]
-  projectColumns      ProjectColumn[]
-  projectCards        ProjectCard[]
-  codespaces          Codespace[]
-  codespacePorts      CodespacePort[]
-  ciPipelines         CiPipeline[]
-  ciJobs              CiJob[]
-  ciJobLogs           CiJobLog[]
-  ciArtifacts         CiArtifact[]
-  packages            Package[]
-  packageVersions     PackageVersion[]
-  packageDownloads    PackageDownload[]
-  auditLogs           AuditLog[]
-  contributorStats    ContributorStat[]
-  lfsObjects          LfsObject[]
-  lfsLocks            LfsLock[]
-  integrations        Integration[]
-  integrationInstalls IntegrationInstallation[]
-  sentAnnouncements   SiteAnnouncement[]
-
   @@index([username])
   @@index([email])
   @@map("users")
@@ -107,8 +42,6 @@ model Session {
   userAgent  String?
   expiresAt  DateTime
   createdAt  DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([token])
@@ -125,8 +58,6 @@ model OAuthAccount {
   avatarUrl  String?
   createdAt  DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@unique([provider, providerId])
   @@index([userId])
   @@map("oauth_accounts")
@@ -141,8 +72,6 @@ model SshKey {
   createdAt DateTime @default(now())
   lastUsedAt DateTime?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@index([userId])
   @@index([fingerprint])
   @@map("ssh_keys")
@@ -153,12 +82,10 @@ model ApiToken {
   userId    String
   name      String
   token     String   @unique
-  scopes    String[]
+  scopes    String  @default("[]")
   expiresAt DateTime?
   lastUsedAt DateTime?
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([token])
@@ -179,17 +106,6 @@ model Organization {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  members         OrgMember[]
-  teams           Team[]
-  repositories    Repository[]   @relation("OrgRepo")
-  projects        Project[]
-  auditLogs       AuditLog[]
-  integrations    Integration[]
-  lfsLocks        LfsLock[]
-  ciPipelines     CiPipeline[]
-  packages        Package[]
-  siteAnnouncements SiteAnnouncement[]
-
   @@index([name])
   @@index([slug])
   @@map("organizations")
@@ -200,11 +116,8 @@ model OrgMember {
   organizationId String
   userId         String
   role           String   @default("member") // owner, admin, member, billing
-  permissions    String[] @default([])
+  permissions    String  @default("[]")
   createdAt      DateTime @default(now())
-
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([organizationId, userId])
   @@index([userId])
@@ -221,10 +134,6 @@ model Team {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  members      TeamMember[]
-  repos        TeamRepo[]
-
   @@unique([organizationId, slug])
   @@index([organizationId])
   @@map("teams")
@@ -237,9 +146,6 @@ model TeamMember {
   role      String   @default("member") // maintainer, member
   createdAt DateTime @default(now())
 
-  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@unique([teamId, userId])
   @@index([userId])
   @@map("team_members")
@@ -251,9 +157,6 @@ model TeamRepo {
   repositoryId String
   permission String   @default("pull") // pull, push, admin
   createdAt DateTime @default(now())
-
-  team       Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 
   @@unique([teamId, repositoryId])
   @@index([repositoryId])
@@ -288,7 +191,7 @@ model Repository {
   openIssuesCount Int    @default(0)
   openPrCount   Int      @default(0)
   license       String?
-  topics        String[] @default([])
+  topics        String  @default("[]")
   allowForking  Boolean  @default(true)
   allowIssues   Boolean  @default(true)
   allowProjects Boolean  @default(true)
@@ -301,38 +204,6 @@ model Repository {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   pushedAt      DateTime @default(now())
-
-  owner         User             @relation("RepoOwner", fields: [ownerId], references: [id])
-  organization  Organization?    @relation("OrgRepo", fields: [organizationId], references: [id])
-  collaborators RepoCollaborator[]
-  repoTopicRefs RepoTopic[]
-  branches      Branch[]
-  branchProtections BranchProtection[]
-  tags          Tag[]
-  releases      Release[]
-  commits       Commit[]
-  commitStatuses CommitStatus[]
-  checkRuns     CheckRun[]
-  checkSuites   CheckSuite[]
-  issues        Issue[]
-  issueLabels   IssueLabel[]
-  issueMilestones IssueMilestone[]
-  pullRequests  PullRequest[]
-  webhooks      Webhook[]
-  stars         Star[]
-  watches       Watch[]
-  forks         Fork[]
-  discussions   Discussion[]
-  wikiPages     WikiPage[]
-  projects      Project[]
-  ciPipelines   CiPipeline[]
-  packages      Package[]
-  contributorStats ContributorStat[]
-  repoTraffic   RepoTraffic[]
-  repoClones    RepoClone[]
-  lfsObjects    LfsObject[]
-  lfsLocks      LfsLock[]
-  teamRepos     TeamRepo[]
 
   @@index([ownerId])
   @@index([organizationId])
@@ -348,9 +219,6 @@ model RepoCollaborator {
   permission   String   @default("pull") // pull, push, triage, maintain, admin
   createdAt    DateTime @default(now())
 
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@unique([repositoryId, userId])
   @@index([userId])
   @@map("repo_collaborators")
@@ -362,9 +230,6 @@ model RepoTopic {
   topic        String
   addedById    String?
   createdAt    DateTime @default(now())
-
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  addedBy    User?      @relation(fields: [addedById], references: [id])
 
   @@unique([repositoryId, topic])
   @@index([topic])
@@ -381,9 +246,6 @@ model Branch {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  createdBy  User?      @relation(fields: [createdById], references: [id])
-
   @@unique([repositoryId, name])
   @@index([repositoryId])
   @@map("branches")
@@ -394,7 +256,7 @@ model BranchProtection {
   repositoryId          String
   branch                String   @default("*")
   requiredReviews       Int      @default(0)
-  requiredStatusChecks  String[] @default([])
+  requiredStatusChecks  String  @default("[]")
   requiredConversation  Boolean  @default(false)
   enforceAdmins         Boolean  @default(false)
   dismissStaleReviews   Boolean  @default(false)
@@ -407,8 +269,6 @@ model BranchProtection {
   pattern               String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
-
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 
   @@unique([repositoryId, branch])
   @@index([repositoryId])
@@ -423,9 +283,6 @@ model Tag {
   message      String?
   createdById  String?
   createdAt    DateTime @default(now())
-
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  createdBy  User?      @relation(fields: [createdById], references: [id])
 
   @@unique([repositoryId, name])
   @@index([repositoryId])
@@ -446,11 +303,6 @@ model Release {
   publishedAt DateTime?
   updatedAt   DateTime @updatedAt
 
-  repository Repository    @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  tag        Tag?          @relation(fields: [tagId], references: [id])
-  author     User          @relation(fields: [authorId], references: [id])
-  assets     ReleaseAsset[]
-
   @@index([repositoryId])
   @@index([tagId])
   @@map("releases")
@@ -466,9 +318,6 @@ model ReleaseAsset {
   uploaderId   String
   createdAt    DateTime @default(now())
   downloadCount Int     @default(0)
-
-  release  Release @relation(fields: [releaseId], references: [id], onDelete: Cascade)
-  uploader User    @relation(fields: [uploaderId], references: [id])
 
   @@index([releaseId])
   @@map("release_assets")
@@ -487,20 +336,12 @@ model Commit {
   committerEmail String
   committedAt  DateTime
   treeSha      String
-  parentShas   String[] @default([])
+  parentShas   String  @default("[]")
   additions    Int      @default(0)
   deletions    Int      @default(0)
   fileCount    Int      @default(0)
   isVerified   Boolean  @default(false)
   createdAt    DateTime @default(now())
-
-  repository   Repository         @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  author       User?              @relation(fields: [authorId], references: [id])
-  statuses     CommitStatus[]
-  parents      Commit[]           @relation("ParentCommit")
-  children     Commit[]           @relation("ChildCommit")
-  checkSuites  CheckSuite[]
-  prCommits    PrCommit[]
 
   @@unique([repositoryId, sha])
   @@index([repositoryId])
@@ -512,9 +353,6 @@ model Commit {
 model CommitParents {
   commitId    String
   parentId    String
-
-  child  Commit @relation("ParentCommit", fields: [commitId], references: [id], onDelete: Cascade)
-  parent Commit @relation("ChildCommit", fields: [parentId], references: [id], onDelete: Cascade)
 
   @@id([commitId, parentId])
   @@map("commit_parents")
@@ -530,9 +368,6 @@ model CommitStatus {
   creatorId    String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-
-  commit  Commit @relation(fields: [commitId], references: [id], onDelete: Cascade)
-  creator User?  @relation(fields: [creatorId], references: [id])
 
   @@unique([commitId, context])
   @@index([commitId])
@@ -552,10 +387,6 @@ model CheckSuite {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  commit     Commit?    @relation(fields: [commitId], references: [id])
-  runs       CheckRun[]
-
   @@index([repositoryId])
   @@index([commitId])
   @@map("check_suites")
@@ -574,15 +405,12 @@ model CheckRun {
   title        String?
   summary      String?
   text         String?
-  annotations  Json?
-  images       Json?
-  actions      Json?
+  annotations  String?
+  images       String?
+  actions      String?
   creatorId    String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-
-  checkSuite CheckSuite @relation(fields: [checkSuiteId], references: [id], onDelete: Cascade)
-  creator    User?      @relation(fields: [creatorId], references: [id])
 
   @@index([checkSuiteId])
   @@map("check_runs")
@@ -599,24 +427,13 @@ model Issue {
   authorId      String
   milestoneId   String?
   assigneeId    String?
-  labelsList    String[] @default([])
+  labelsList    String  @default("[]")
   pullRequestId String? @unique
   duplicateOfId String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   closedAt      DateTime?
   stateReason   String?
-
-  repository   Repository       @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  author       User             @relation("IssueAuthor", fields: [authorId], references: [id])
-  milestone    IssueMilestone?  @relation(fields: [milestoneId], references: [id])
-  assignees    IssueAssignee[]
-  comments     IssueComment[]
-  reactions    IssueReaction[]
-  events       IssueEvent[]
-  pullRequest  PullRequest?     @relation(fields: [pullRequestId], references: [id])
-  duplicateOf  Issue?           @relation("DuplicateIssue", fields: [duplicateOfId], references: [id])
-  duplicates   Issue[]          @relation("DuplicateIssue")
 
   @@unique([repositoryId, number])
   @@index([repositoryId])
@@ -631,9 +448,6 @@ model IssueAssignee {
   issueId   String
   userId    String
 
-  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@unique([issueId, userId])
   @@map("issue_assignees")
 }
@@ -645,10 +459,6 @@ model IssueComment {
   body      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  issue  Issue           @relation(fields: [issueId], references: [id], onDelete: Cascade)
-  author User            @relation(fields: [authorId], references: [id])
-  reactions IssueReaction[]
 
   @@index([issueId])
   @@index([authorId])
@@ -663,10 +473,6 @@ model IssueReaction {
   reaction  String   // +1, -1, laugh, confused, heart, hooray, rocket, eyes
   createdAt DateTime @default(now())
 
-  issue   Issue?        @relation(fields: [issueId], references: [id], onDelete: Cascade)
-  comment IssueComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@index([issueId])
   @@index([commentId])
   @@map("issue_reactions")
@@ -680,8 +486,6 @@ model IssueLabel {
   description  String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 
   @@unique([repositoryId, name])
   @@index([repositoryId])
@@ -701,10 +505,6 @@ model IssueMilestone {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  closedBy   User?      @relation("MilestoneClosedBy", fields: [closedById], references: [id])
-  issues     Issue[]
-
   @@unique([repositoryId, number])
   @@index([repositoryId])
   @@map("issue_milestones")
@@ -714,12 +514,9 @@ model IssueEvent {
   id        String   @id @default(cuid())
   issueId   String
   actorId   String
-  event     String   // closed, reopened, assigned, unassigned, labeled, unlabeled, milestoned, demilestoned, locked, unlocked, referenced, mentioned, subscribed
-  data      Json?
+  event     String
+  data      String?
   createdAt DateTime @default(now())
-
-  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
-  actor User  @relation(fields: [actorId], references: [id])
 
   @@index([issueId])
   @@map("issue_events")
@@ -754,24 +551,11 @@ model PullRequest {
   rebaseable      Boolean  @default(true)
   autoMergeEnabled Boolean @default(false)
   autoMergeMethod  String?
-  labelsList      String[] @default([])
+  labelsList      String   @default("[]")
   milestoneId     String?
   draftAt         DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-
-  repository   Repository         @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  author       User               @relation("PrAuthor", fields: [authorId], references: [id])
-  headRepo     Repository?        @relation("HeadRepo", fields: [headRepoId], references: [id])
-  baseRepo     Repository         @relation("BaseRepo", fields: [baseRepoId], references: [id])
-  mergedBy     User?              @relation("PRMergedBy", fields: [mergedById], references: [id])
-  closedBy     User?              @relation("PRClosedBy", fields: [closedById], references: [id])
-  milestone    IssueMilestone?    @relation(fields: [milestoneId], references: [id])
-  reviews      PrReview[]
-  reviewComments PrReviewComment[]
-  reviewEvents PrReviewEvent[]
-  commits      PrCommit[]
-  checkResults PrCheckResult[]
 
   @@unique([repositoryId, number])
   @@index([repositoryId])
@@ -782,18 +566,15 @@ model PullRequest {
 }
 
 model PrReview {
-  id           String   @id @default(cuid())
+  id            String   @id @default(cuid())
   pullRequestId String
-  reviewerId   String
-  body         String?
-  state        String   // approved, changes_requested, commented, dismissed, pending
-  commitSha    String?
-  submittedAt  DateTime @default(now())
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  pullRequest PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
-  reviewer    User        @relation(fields: [reviewerId], references: [id])
+  reviewerId    String
+  body          String?
+  state         String
+  commitSha     String?
+  submittedAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([pullRequestId])
   @@index([reviewerId])
@@ -814,10 +595,6 @@ model PrReviewComment {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  pullRequest PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
-  review      PrReview?   @relation(fields: [reviewId], references: [id])
-  author      User        @relation(fields: [authorId], references: [id])
-
   @@index([pullRequestId])
   @@index([reviewId])
   @@map("pr_review_comments")
@@ -827,12 +604,9 @@ model PrReviewEvent {
   id            String   @id @default(cuid())
   pullRequestId String
   actorId       String
-  event         String   // approved, changes_requested, commented, dismissed, head_ref_deleted, head_ref_restored, merged, auto_merge_enabled, auto_merge_disabled
-  data          Json?
+  event         String
+  data          String?
   createdAt     DateTime @default(now())
-
-  pullRequest PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
-  actor       User        @relation(fields: [actorId], references: [id])
 
   @@index([pullRequestId])
   @@map("pr_review_events")
@@ -842,9 +616,6 @@ model PrCommit {
   id            String @id @default(cuid())
   pullRequestId String
   commitId      String
-
-  pullRequest PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
-  commit      Commit      @relation(fields: [commitId], references: [id], onDelete: Cascade)
 
   @@unique([pullRequestId, commitId])
   @@index([commitId])
@@ -859,8 +630,6 @@ model PrCheckResult {
   conclusion    String?
   createdAt     DateTime @default(now())
 
-  pullRequest PullRequest @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
-
   @@index([pullRequestId])
   @@map("pr_check_results")
 }
@@ -873,17 +642,12 @@ model Webhook {
   url           String
   contentType   String   @default("json")
   secret        String?
-  events        String[] @default([])
+  events        String   @default("[]")
   isActive      Boolean  @default(true)
   sslVerify     Boolean  @default(true)
   lastDelivery  DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-
-  repository  Repository?        @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  organization Organization?     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user        User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deliveries  WebhookDelivery[]
 
   @@index([repositoryId])
   @@index([organizationId])
@@ -895,15 +659,13 @@ model WebhookDelivery {
   id           String   @id @default(cuid())
   webhookId    String
   event        String
-  payload      Json
+  payload      String   @default("{}")
   responseCode Int?
   responseBody String?
   status       String   @default("pending")
   attempts     Int      @default(0)
   nextAttempt  DateTime?
   createdAt    DateTime @default(now())
-
-  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
 
   @@index([webhookId])
   @@index([status])
@@ -913,18 +675,15 @@ model WebhookDelivery {
 model Notification {
   id        String   @id @default(cuid())
   userId    String
-  type      String   // issue, pull_request, release, discussion, security_alert, ci, mention, review
+  type      String
   title     String
   body      String?
-  data      Json?
+  data      String?
   isRead    Boolean  @default(false)
   repoId    String?
   actorId   String?
   link      String?
   createdAt DateTime @default(now())
-
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  actor User? @relation("NotificationActor", fields: [actorId], references: [id])
 
   @@index([userId, isRead])
   @@index([userId, createdAt])
@@ -939,8 +698,6 @@ model NotificationSubscription {
   channel   String   @default("email")
   enabled   Boolean  @default(true)
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("notification_subscriptions")
@@ -959,11 +716,6 @@ model Discussion {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  repository Repository         @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  author     User               @relation(fields: [authorId], references: [id])
-  comments   DiscussionComment[]
-  votes      DiscussionVote[]
-
   @@unique([repositoryId, number])
   @@index([repositoryId])
   @@index([authorId])
@@ -980,11 +732,6 @@ model DiscussionComment {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  discussion Discussion        @relation(fields: [discussionId], references: [id], onDelete: Cascade)
-  author     User              @relation(fields: [authorId], references: [id])
-  parent     DiscussionComment? @relation("ReplyTo", fields: [parentId], references: [id])
-  replies    DiscussionComment[] @relation("ReplyTo")
-
   @@index([discussionId])
   @@index([authorId])
   @@map("discussion_comments")
@@ -996,9 +743,6 @@ model DiscussionVote {
   userId       String
   vote         Int    @default(1) // 1 or -1
 
-  discussion Discussion @relation(fields: [discussionId], references: [id], onDelete: Cascade)
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@unique([discussionId, userId])
   @@map("discussion_votes")
 }
@@ -1008,9 +752,6 @@ model Star {
   repositoryId String
   userId       String
   createdAt    DateTime @default(now())
-
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([repositoryId, userId])
   @@index([userId])
@@ -1024,9 +765,6 @@ model Watch {
   subscription String   @default("subscribed") // subscribed, ignored, muted
   createdAt    DateTime @default(now())
 
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@unique([repositoryId, userId])
   @@index([userId])
   @@map("watches")
@@ -1039,10 +777,6 @@ model Fork {
   userId       String
   createdAt    DateTime @default(now())
 
-  repository Repository @relation("OriginalRepo", fields: [repositoryId], references: [id], onDelete: Cascade)
-  fork       Repository @relation("ForkRepo", fields: [forkId], references: [id])
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@index([repositoryId])
   @@index([userId])
   @@map("forks")
@@ -1053,9 +787,6 @@ model Follow {
   followerId  String
   followingId String
   createdAt   DateTime @default(now())
-
-  follower  User @relation("FollowSource", fields: [followerId], references: [id], onDelete: Cascade)
-  following User @relation("FollowTarget", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followingId])
   @@map("followers")
@@ -1072,10 +803,6 @@ model WikiPage {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  repository Repository   @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  author     User         @relation(fields: [authorId], references: [id])
-  revisions  WikiRevision[]
-
   @@unique([repositoryId, slug])
   @@index([repositoryId])
   @@map("wiki_pages")
@@ -1089,9 +816,6 @@ model WikiRevision {
   message   String?
   number    Int
   createdAt DateTime @default(now())
-
-  page   WikiPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
-  author User     @relation(fields: [authorId], references: [id])
 
   @@index([pageId])
   @@map("wiki_revisions")
@@ -1111,12 +835,6 @@ model Project {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  owner        User?             @relation("ProjectOwner", fields: [ownerId], references: [id])
-  organization Organization?     @relation(fields: [organizationId], references: [id])
-  repository   Repository?       @relation(fields: [repositoryId], references: [id])
-  creator      User?             @relation("ProjectCreator", fields: [creatorId], references: [id])
-  columns      ProjectColumn[]
-
   @@index([ownerId])
   @@index([organizationId])
   @@index([repositoryId])
@@ -1129,9 +847,6 @@ model ProjectColumn {
   name      String
   position  Int      @default(0)
   createdAt DateTime @default(now())
-
-  project Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  cards   ProjectCard[]
 
   @@index([projectId])
   @@map("project_columns")
@@ -1146,10 +861,6 @@ model ProjectCard {
   creatorId  String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-
-  column  ProjectColumn @relation(fields: [columnId], references: [id], onDelete: Cascade)
-  issue   Issue?        @relation(fields: [issueId], references: [id])
-  creator User?         @relation(fields: [creatorId], references: [id])
 
   @@index([columnId])
   @@map("project_cards")
@@ -1169,10 +880,6 @@ model Codespace {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  repository Repository?     @relation(fields: [repositoryId], references: [id])
-  ports      CodespacePort[]
-
   @@index([userId])
   @@index([repositoryId])
   @@map("codespaces")
@@ -1187,8 +894,6 @@ model CodespacePort {
   url         String?
   createdAt   DateTime @default(now())
 
-  codespace Codespace @relation(fields: [codespaceId], references: [id], onDelete: Cascade)
-
   @@index([codespaceId])
   @@map("codespace_ports")
 }
@@ -1201,16 +906,12 @@ model CiPipeline {
   status        String   @default("pending") // pending, running, passed, failed, cancelled, skipped
   triggeredBy   String?  // webhook, manual, schedule, pr
   creatorId     String?
-  config        Json?
+  config        String?
   startedAt     DateTime?
   finishedAt    DateTime?
   duration      Int?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  creator    User?      @relation(fields: [creatorId], references: [id])
-  jobs       CiJob[]
 
   @@index([repositoryId])
   @@index([commitSha])
@@ -1226,8 +927,8 @@ model CiJob {
   conclusion  String?
   runnerLabel String?
   image       String?
-  commands    String[]
-  env         Json?
+  commands    String  @default("[]")
+  env         String?
   startedAt   DateTime?
   finishedAt  DateTime?
   duration    Int?
@@ -1235,10 +936,6 @@ model CiJob {
   retryOf     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-
-  pipeline CiPipeline   @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
-  logs     CiJobLog[]
-  artifacts CiArtifact[]
 
   @@index([pipelineId])
   @@index([status])
@@ -1252,8 +949,6 @@ model CiJobLog {
   lineStart Int      @default(0)
   lineEnd   Int      @default(0)
   createdAt DateTime @default(now())
-
-  job CiJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   @@index([jobId])
   @@map("ci_job_logs")
@@ -1269,8 +964,6 @@ model CiArtifact {
   downloadUrl String?
   expiresAt  DateTime?
   createdAt  DateTime @default(now())
-
-  job CiJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   @@index([jobId])
   @@map("ci_artifacts")
@@ -1290,11 +983,6 @@ model Package {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  repository Repository?    @relation(fields: [repositoryId], references: [id])
-  organization Organization? @relation(fields: [organizationId], references: [id])
-  owner      User?          @relation(fields: [ownerId], references: [id])
-  versions   PackageVersion[]
-
   @@index([repositoryId])
   @@index([organizationId])
   @@index([name])
@@ -1305,15 +993,12 @@ model PackageVersion {
   id          String   @id @default(cuid())
   packageId   String
   version     String
-  metadata    Json?
+  metadata    String?
   fileUrl     String?
   sha256      String?
   size        Int      @default(0)
   isLatest    Boolean  @default(false)
   createdAt   DateTime @default(now())
-
-  package   Package          @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  downloads PackageDownload[]
 
   @@unique([packageId, version])
   @@index([packageId])
@@ -1328,9 +1013,6 @@ model PackageDownload {
   userAgent String?
   createdAt DateTime @default(now())
 
-  version PackageVersion @relation(fields: [versionId], references: [id], onDelete: Cascade)
-  user    User?          @relation(fields: [userId], references: [id])
-
   @@index([versionId])
   @@map("package_downloads")
 }
@@ -1343,12 +1025,9 @@ model AuditLog {
   action    String
   target    String?
   targetId  String?
-  data      Json?
+  data      String?
   ipAddress String?
   createdAt DateTime @default(now())
-
-  actor User?         @relation(fields: [actorId], references: [id])
-  org   Organization? @relation(fields: [orgId], references: [id])
 
   @@index([actorId])
   @@index([orgId])
@@ -1360,7 +1039,7 @@ model AuditLog {
 model AdminSetting {
   id        String   @id @default(cuid())
   key       String   @unique
-  value     Json
+  value     String
   updatedAt DateTime @updatedAt
 
   @@map("admin_settings")
@@ -1378,9 +1057,6 @@ model SiteAnnouncement {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  org        Organization? @relation(fields: [orgId], references: [id])
-  createdBy  User?         @relation(fields: [createdById], references: [id])
-
   @@index([orgId])
   @@map("site_announcements")
 }
@@ -1396,9 +1072,6 @@ model ContributorStat {
   lastCommit   DateTime?
   updatedAt    DateTime @updatedAt
 
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@unique([repositoryId, userId])
   @@index([repositoryId])
   @@index([userId])
@@ -1413,8 +1086,6 @@ model RepoTraffic {
   uniqueViews  Int      @default(0)
   visitors     Int      @default(0)
 
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-
   @@unique([repositoryId, date])
   @@index([repositoryId])
   @@map("repo_traffic")
@@ -1426,8 +1097,6 @@ model RepoClone {
   date         DateTime
   clones       Int      @default(0)
   uniqueClones Int      @default(0)
-
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
 
   @@unique([repositoryId, date])
   @@index([repositoryId])
@@ -1443,9 +1112,6 @@ model LfsObject {
   uploadedById String?
   uploadedAt   DateTime @default(now())
 
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  uploader   User?      @relation(fields: [uploadedById], references: [id])
-
   @@unique([repositoryId, oid])
   @@index([repositoryId])
   @@index([oid])
@@ -1457,13 +1123,8 @@ model LfsLock {
   repositoryId String
   path        String
   ownerId     String
-  lockedById  String?
   lockTier    String   @default("default") // default, strict, sticky
   createdAt   DateTime @default(now())
-
-  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
-  owner      Organization? @relation(fields: [ownerId], references: [id])
-  lockedBy   User?       @relation(fields: [lockedById], references: [id])
 
   @@unique([repositoryId, path])
   @@index([repositoryId])
@@ -1484,10 +1145,6 @@ model Integration {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  owner        User?                    @relation(fields: [ownerId], references: [id])
-  organization Organization?            @relation(fields: [organizationId], references: [id])
-  installations IntegrationInstallation[]
-
   @@index([ownerId])
   @@index([organizationId])
   @@map("integrations")
@@ -1498,13 +1155,11 @@ model IntegrationInstallation {
   integrationId String
   targetId      String   // org or user id
   targetType    String   // organization, user
-  permissions   Json?
-  events        String[] @default([])
+  permissions   String  @default("{}")
+  events        String  @default("[]")
   token         String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-
-  integration Integration @relation(fields: [integrationId], references: [id], onDelete: Cascade)
 
   @@unique([integrationId, targetId, targetType])
   @@index([integrationId])
@@ -1516,8 +1171,6 @@ model IntegrationPermission {
   installationId  String
   permission      String
   granted         Boolean @default(false)
-
-  installation IntegrationInstallation @relation(fields: [installationId], references: [id], onDelete: Cascade)
 
   @@unique([installationId, permission])
   @@map("integration_permissions")

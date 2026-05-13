@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import {
-  CircleDot, CheckCircle, CheckCircle, XCircle, Tag, User, Milestone,
+  CircleDot, CheckCircle, XCircle, Tag, User, Milestone,
   MessageSquare, ChevronDown, SortAsc, Search, Square, CheckSquare,
 } from 'lucide-react';
 import { cn, formatRelativeTime, formatCount } from '@/lib/utils';

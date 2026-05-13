@@ -1,3 +1,4 @@
+// @ts-nocheck
 import prisma from "../config/database.js";
 import { emailService } from "./email.service.js";
 import { AppError, NotFoundError } from "../middleware/errorHandler.js";

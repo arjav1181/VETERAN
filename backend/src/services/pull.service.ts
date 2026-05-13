@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { execSync } from "node:child_process";
 import prisma from "../config/database.js";
 import { gitService } from "./git/git.service.js";

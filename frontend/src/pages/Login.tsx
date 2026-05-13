@@ -11,7 +11,7 @@ import { getApiError } from '@lib/api/client';
 import { GitFork, LogIn } from 'lucide-react';
 
 const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
+  login: z.string().min(1, 'Username or email is required'),
   password: z.string().min(1, 'Password is required'),
 });
 
@@ -72,10 +72,11 @@ export function Login() {
 
           <VeteranInput
             label="Email"
-            type="email"
-            placeholder="you@example.com"
-            error={errors.email?.message}
-            {...register('email')}
+            type="text"
+            placeholder="username or email"
+            label="Username or Email"
+            error={errors.login?.message}
+            {...register('login')}
           />
 
           <div>

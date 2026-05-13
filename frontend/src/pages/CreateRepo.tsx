@@ -1,10 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Github, Lock, Globe, Shield, Loader2, Check } from 'lucide-react';
+import { useAuthStore } from '@stores/authStore';
+import { repoApi } from '@lib/api/endpoints/repos';
+import { getApiError } from '@lib/api/client';
+import { Github, Lock, Globe, Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function CreateRepo() {
   const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
@@ -12,15 +16,30 @@ export function CreateRepo() {
   const [gitignore, setGitignore] = useState('');
   const [license, setLicense] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
     setLoading(true);
-    setTimeout(() => {
+    setError(null);
+
+    try {
+      const repo = await repoApi.create({
+        name: name.trim(),
+        description: description.trim() || undefined,
+        isPrivate: visibility === 'private',
+        autoInit: initReadme,
+        gitignoreTemplate: gitignore || undefined,
+        licenseTemplate: license || undefined,
+      });
+      navigate(`/${user?.username || '_'}/${repo.name || name}`);
+    } catch (err) {
+      const apiError = getApiError(err);
+      setError(apiError.message);
+    } finally {
       setLoading(false);
-      navigate(`/user/${name}`);
-    }, 1000);
+    }
   };
 
   return (
@@ -35,10 +54,18 @@ export function CreateRepo() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {error && (
+            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-sm text-red-600 dark:text-red-400">
+              {error}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-text-primary mb-1">Repository name *</label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm">user/</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm">
+                {user?.username || 'user'}/
+              </span>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value.replace(/[^a-zA-Z0-9._-]/g, ''))}
@@ -49,7 +76,7 @@ export function CreateRepo() {
             </div>
             {name && (
               <p className="mt-1 text-xs text-text-muted">
-                Will be available at <code className="text-accent">veteran.dev/user/{name}</code>
+                Will be available at <code className="text-accent">veteran.dev/{user?.username || 'user'}/{name}</code>
               </p>
             )}
           </div>

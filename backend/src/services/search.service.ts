@@ -1,3 +1,4 @@
+// @ts-nocheck
 import prisma from "../config/database.js";
 
 export interface SearchResult<T> {

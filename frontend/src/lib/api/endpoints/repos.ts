@@ -2,44 +2,44 @@ import { api } from '../client';
 
 export type Repo = {
   id: string;
-  owner_id: string;
+  ownerId: string;
   name: string;
-  full_name: string;
+  fullName: string;
   description: string | null;
-  private: boolean;
-  fork: boolean;
-  archived: boolean;
-  default_branch: string;
+  isPrivate: boolean;
+  isFork: boolean;
+  isArchived: boolean;
+  defaultBranch: string;
   language: string | null;
   topics: string[];
-  stars_count: number;
-  forks_count: number;
-  open_issues_count: number;
-  watchers_count: number;
+  starsCount: number;
+  forksCount: number;
+  openIssuesCount: number;
+  watchersCount: number;
   size: number;
-  created_at: string;
-  updated_at: string;
-  pushed_at: string;
+  createdAt: string;
+  updatedAt: string;
+  pushedAt: string;
   owner: {
     id: string;
     username: string;
-    avatar_url: string | null;
+    avatarUrl: string | null;
   };
   permissions?: {
-    admin: boolean;
     push: boolean;
     pull: boolean;
+    admin: boolean;
   };
 };
 
 export type CreateRepoRequest = {
   name: string;
   description?: string;
-  private?: boolean;
-  auto_init?: boolean;
-  gitignore_template?: string;
-  license_template?: string;
-  readme?: boolean;
+  isPrivate?: boolean;
+  autoInit?: boolean;
+  defaultBranch?: string;
+  gitignoreTemplate?: string;
+  licenseTemplate?: string;
 };
 
 export type UpdateRepoRequest = {

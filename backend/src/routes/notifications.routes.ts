@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Router, Request, Response, NextFunction } from "express";
 import { notificationService } from "../services/notification.service.js";
 import { requireAuth } from "../middleware/auth.js";

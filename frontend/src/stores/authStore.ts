@@ -3,15 +3,15 @@ import { persist } from 'zustand/middleware';
 import type { AuthResponse } from '@lib/api/endpoints/auth';
 
 type User = AuthResponse['user'];
-type Session = AuthResponse['session'];
 
 type AuthState = {
   user: User | null;
-  session: Session | null;
+  accessToken: string | null;
+  refreshToken: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   setUser: (user: User | null) => void;
-  setSession: (session: Session | null) => void;
+  setTokens: (accessToken: string, refreshToken: string) => void;
   setAuth: (auth: AuthResponse) => void;
   setLoading: (loading: boolean) => void;
   logout: () => void;
@@ -22,20 +22,22 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      session: null,
+      accessToken: null,
+      refreshToken: null,
       isLoading: true,
       isAuthenticated: false,
 
       setUser: (user) =>
         set({ user, isAuthenticated: !!user }),
 
-      setSession: (session) =>
-        set({ session }),
+      setTokens: (accessToken, refreshToken) =>
+        set({ accessToken, refreshToken }),
 
       setAuth: (auth) =>
         set({
           user: auth.user,
-          session: auth.session,
+          accessToken: auth.accessToken,
+          refreshToken: auth.refreshToken,
           isAuthenticated: true,
           isLoading: false,
         }),
@@ -46,7 +48,8 @@ export const useAuthStore = create<AuthState>()(
       logout: () =>
         set({
           user: null,
-          session: null,
+          accessToken: null,
+          refreshToken: null,
           isAuthenticated: false,
           isLoading: false,
         }),
@@ -60,7 +63,8 @@ export const useAuthStore = create<AuthState>()(
       name: 'veteran-auth',
       partialize: (state) => ({
         user: state.user,
-        session: state.session,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
     }

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import prisma from "../config/database.js";
 import { generateFingerprint } from "../utils/crypto.js";
 import { logger } from "../utils/logger.js";

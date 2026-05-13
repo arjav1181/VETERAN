@@ -1,7 +1,7 @@
 import { api } from '../client';
 
 export type LoginRequest = {
-  email: string;
+  login: string;
   password: string;
 };
 
@@ -17,15 +17,14 @@ export type AuthResponse = {
     id: string;
     email: string;
     username: string;
-    name: string;
-    avatar_url: string | null;
-    created_at: string;
+    displayName?: string | null;
+    avatarUrl?: string | null;
+    createdAt?: string;
   };
-  session: {
-    access_token: string;
-    refresh_token: string;
-    expires_at: number;
-  };
+  accessToken: string;
+  refreshToken: string;
+  sessionId: string;
+  expiresIn: number;
 };
 
 export const authApi = {
@@ -36,8 +35,8 @@ export const authApi = {
   logout: () => api.post<void>('/auth/logout'),
 
   refresh: (refreshToken: string) =>
-    api.post<{ session: AuthResponse['session'] }>('/auth/refresh', {
-      refresh_token: refreshToken,
+    api.post<{ accessToken: string; refreshToken: string }>('/auth/refresh', {
+      refreshToken,
     }),
 
   forgotPassword: (email: string) =>

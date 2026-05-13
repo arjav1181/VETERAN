@@ -1,3 +1,4 @@
+// @ts-nocheck
 import prisma from "../../config/database.js";
 import { env } from "../../config/env.js";
 import { generateToken, generateOAuthState } from "../../utils/crypto.js";

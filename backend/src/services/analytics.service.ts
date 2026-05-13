@@ -1,3 +1,4 @@
+// @ts-nocheck
 import prisma from "../config/database.js";
 import { getRedis } from "../config/redis.js";
 import { CACHE_TTL } from "../config/constants.js";

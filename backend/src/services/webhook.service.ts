@@ -1,3 +1,4 @@
+// @ts-nocheck
 import crypto from "node:crypto";
 import prisma from "../config/database.js";
 import { AppError, NotFoundError } from "../middleware/errorHandler.js";

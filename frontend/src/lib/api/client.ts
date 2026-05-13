@@ -1,7 +1,7 @@
 import axios, { AxiosError, type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios';
 import { useAuthStore } from '@stores/authStore';
 
-const BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
 class ApiClient {
   private client: AxiosInstance;
@@ -17,7 +17,7 @@ class ApiClient {
 
     this.client.interceptors.request.use(
       (config) => {
-        const token = useAuthStore.getState().session?.access_token;
+        const token = useAuthStore.getState().accessToken;
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
@@ -34,16 +34,16 @@ class ApiClient {
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
           try {
-            const refreshToken = useAuthStore.getState().session?.refresh_token;
+            const refreshToken = useAuthStore.getState().refreshToken;
             if (refreshToken) {
               const response = await axios.post(`${BASE_URL}/auth/refresh`, {
-                refresh_token: refreshToken,
+                refreshToken,
               });
-              const { session } = response.data;
-              useAuthStore.getState().setSession(session);
+              const data = response.data as { accessToken: string; refreshToken: string };
+              useAuthStore.getState().setTokens(data.accessToken, data.refreshToken);
               originalRequest.headers = {
                 ...originalRequest.headers,
-                Authorization: `Bearer ${session.access_token}`,
+                Authorization: `Bearer ${data.accessToken}`,
               };
               return this.client(originalRequest);
             }

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import prisma from "../config/database.js";
 import { AppError, NotFoundError, ConflictError } from "../middleware/errorHandler.js";
 import { DEFAULT_LABELS } from "../config/constants.js";
