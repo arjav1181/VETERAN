@@ -15,8 +15,8 @@ export function RepoCode() {
   const [currentBranch, setCurrentBranch] = useState('main');
 
   const { data: repo, isLoading: repoLoading, error: repoError } = useRepo(owner!, name!);
-  const { data: contents, isLoading: contentsLoading } = useRepoContents(owner!, name!, '');
-  const { data: readme } = useRepoReadme(owner!, name!);
+  const { data: contents, isLoading: contentsLoading } = useRepoContents(owner!, name!, '', currentBranch);
+  const { data: readme } = useRepoReadme(owner!, name!, currentBranch);
   const { data: branches = [] } = useRepoBranches(owner!, name!);
 
   const readmeContent = useMemo(() => {
