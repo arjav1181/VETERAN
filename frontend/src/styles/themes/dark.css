@@ -1,16 +1,15 @@
-.dark {
-  --veteran-fg: 222 226 230;
-  --veteran-bg: 20 21 23;
-  --veteran-accent: 92 124 250;
-  --veteran-gold: 252 196 25;
-  --veteran-success: 64 192 87;
-  --veteran-danger: 250 82 82;
-  --veteran-warning: 252 196 25;
-  --veteran-info: 69 151 240;
-  --veteran-muted: 134 142 150;
-  --veteran-border: 52 58 64;
-  --veteran-surface: 33 37 41;
-  --veteran-surface-hover: 40 45 50;
+:root {
+  --veteran-fg: 230 237 243;
+  --veteran-bg: 10 12 16;
+  --veteran-accent: 232 184 75;
+  --veteran-gold: 232 184 75;
+  --veteran-success: 63 185 80;
+  --veteran-danger: 248 81 73;
+  --veteran-warning: 210 153 34;
+  --veteran-info: 88 166 255;
+  --veteran-muted: 72 79 88;
+  --veteran-border: 33 38 45;
+  --veteran-surface: 19 22 30;
+  --veteran-surface-hover: 26 30 40;
   --veteran-overlay: 0 0 0 / 0.6;
-  color-scheme: dark;
 }

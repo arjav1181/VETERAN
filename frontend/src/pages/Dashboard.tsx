@@ -29,10 +29,10 @@ import { cn } from '@lib/utils';
 import type { Repo } from '@lib/api/endpoints/repos';
 
 const quickActions = [
-  { label: 'New repository', icon: Plus, color: 'text-veteran-500 bg-veteran-100 dark:bg-veteran-900/30', onClick: () => {} },
-  { label: 'New organization', icon: Users, color: 'text-brand-500 bg-brand-100 dark:bg-brand-900/30', onClick: () => {} },
-  { label: 'Browse documentation', icon: BookOpen, color: 'text-green-500 bg-green-100 dark:bg-green-900/30', onClick: () => {} },
-  { label: 'View trending', icon: TrendingUp, color: 'text-purple-500 bg-purple-100 dark:bg-purple-900/30', onClick: () => {} },
+  { label: 'New repository', icon: Plus, color: 'text-accent bg-accent/10', onClick: () => window.location.href = '/new' },
+  { label: 'New organization', icon: Users, color: 'text-info bg-info/10', onClick: () => window.location.href = '/organizations/new' },
+  { label: 'Browse documentation', icon: BookOpen, color: 'text-success bg-success/10', onClick: () => window.location.href = '/explore' },
+  { label: 'View trending', icon: TrendingUp, color: 'text-warning bg-warning/10', onClick: () => window.location.href = '/explore' },
 ];
 
 export function Dashboard() {
