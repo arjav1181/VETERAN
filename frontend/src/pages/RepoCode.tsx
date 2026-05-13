@@ -14,10 +14,24 @@ export function RepoCode() {
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [currentBranch, setCurrentBranch] = useState('main');
 
-  const { data: repo, isLoading: repoLoading, error: repoError } = useRepo(owner!, name!);
-  const { data: contents, isLoading: contentsLoading } = useRepoContents(owner!, name!, '', currentBranch);
-  const { data: readme } = useRepoReadme(owner!, name!, currentBranch);
-  const { data: branches = [] } = useRepoBranches(owner!, name!);
+  if (!owner || !name) {
+    return (
+      <div className="min-h-screen bg-primary-dark flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">📂</div>
+          <h2 className="text-xl font-bold text-text-primary mb-2">Invalid URL</h2>
+          <p className="text-text-secondary mb-4">The URL must include both owner and repository name.</p>
+          <p className="text-text-muted text-xs mb-4">Expected: /owner/repo-name</p>
+          <a href="/" className="text-accent hover:underline text-sm">Go to Dashboard</a>
+        </div>
+      </div>
+    );
+  }
+
+  const { data: repo, isLoading: repoLoading, error: repoError } = useRepo(owner, name);
+  const { data: contents, isLoading: contentsLoading } = useRepoContents(owner, name, '', currentBranch);
+  const { data: readme } = useRepoReadme(owner, name, currentBranch);
+  const { data: branches = [] } = useRepoBranches(owner, name);
 
   const readmeContent = useMemo(() => {
     if (readme?.content) {
