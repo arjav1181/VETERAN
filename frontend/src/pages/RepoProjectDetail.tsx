@@ -1,41 +1,68 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft, Layout, Table, CalendarDays } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BoardView } from '@/components/projects/BoardView';
 import { TableView } from '@/components/projects/TableView';
 import { RoadmapView } from '@/components/projects/RoadmapView';
-import type { ProjectColumn, ProjectCard } from '@/types';
-
-const MOCK_COLUMNS: ProjectColumn[] = [
-  { id: 'col-1', projectId: 'p1', name: 'Backlog', position: 0, cardCount: 5, isArchived: false, createdAt: '', updatedAt: '' },
-  { id: 'col-2', projectId: 'p1', name: 'In Progress', position: 1, cardCount: 3, isArchived: false, createdAt: '', updatedAt: '' },
-  { id: 'col-3', projectId: 'p1', name: 'In Review', position: 2, cardCount: 2, isArchived: false, createdAt: '', updatedAt: '' },
-  { id: 'col-4', projectId: 'p1', name: 'Done', position: 3, cardCount: 4, isArchived: false, createdAt: '', updatedAt: '' },
-];
-
-const MOCK_CARDS: ProjectCard[] = [
-  { id: 'card-1', columnId: 'col-1', projectId: 'p1', position: 0, contentId: null, contentType: 'note', note: 'Investigate authentication bug', isArchived: false, archivedAt: null, creatorId: 'u1', creatorUsername: 'jane-dev', createdAt: '', updatedAt: '' },
-  { id: 'card-2', columnId: 'col-1', projectId: 'p1', position: 1, contentId: null, contentType: 'note', note: 'Design new dashboard layout', isArchived: false, archivedAt: null, creatorId: 'u2', creatorUsername: 'john-doe', createdAt: '', updatedAt: '' },
-  { id: 'card-3', columnId: 'col-2', projectId: 'p1', position: 0, contentId: null, contentType: 'issue', note: 'Implement file upload', isArchived: false, archivedAt: null, creatorId: 'u1', creatorUsername: 'jane-dev', createdAt: '', updatedAt: '' },
-  { id: 'card-4', columnId: 'col-2', projectId: 'p1', position: 1, contentId: null, contentType: 'issue', note: 'Add search functionality', isArchived: false, archivedAt: null, creatorId: 'u2', creatorUsername: 'john-doe', createdAt: '', updatedAt: '' },
-  { id: 'card-5', columnId: 'col-3', projectId: 'p1', position: 0, contentId: null, contentType: 'pull_request', note: 'API optimization PR', isArchived: false, archivedAt: null, creatorId: 'u1', creatorUsername: 'jane-dev', createdAt: '', updatedAt: '' },
-  { id: 'card-6', columnId: 'col-4', projectId: 'p1', position: 0, contentId: null, contentType: 'note', note: 'Complete database migration', isArchived: false, archivedAt: null, creatorId: 'u1', creatorUsername: 'jane-dev', createdAt: '', updatedAt: '' },
-  { id: 'card-7', columnId: 'col-4', projectId: 'p1', position: 1, contentId: null, contentType: 'note', note: 'Deploy v1.0 to production', isArchived: false, archivedAt: null, creatorId: 'u2', creatorUsername: 'john-doe', createdAt: '', updatedAt: '' },
-];
-
-const ROADMAP_ITEMS = [
-  { id: 'r1', title: 'Authentication System', startDate: new Date(2026, 0, 1), endDate: new Date(2026, 1, 15), progress: 100, assignee: 'Jane', status: 'completed' },
-  { id: 'r2', title: 'Dashboard Redesign', startDate: new Date(2026, 1, 1), endDate: new Date(2026, 2, 30), progress: 60, assignee: 'John', status: 'in_progress' },
-  { id: 'r3', title: 'API v2 Implementation', startDate: new Date(2026, 2, 15), endDate: new Date(2026, 4, 1), progress: 30, assignee: 'Jane', status: 'in_progress' },
-  { id: 'r4', title: 'Mobile App Support', startDate: new Date(2026, 4, 1), endDate: new Date(2026, 6, 30), progress: 0, assignee: 'Bob', status: 'planned' },
-  { id: 'r5', title: 'Performance Optimization', startDate: new Date(2026, 3, 1), endDate: new Date(2026, 5, 15), progress: 10, assignee: 'Alice', status: 'planned' },
-];
+import { api } from '@lib/api/client';
+import { VeteranSkeleton } from '@ui/VeteranSkeleton';
+import { VeteranEmptyState } from '@ui/VeteranEmptyState';
 
 export function RepoProjectDetail() {
   const { owner, name, number } = useParams<{ owner: string; name: string; number: string }>();
   const navigate = useNavigate();
   const [view, setView] = useState<'board' | 'table' | 'roadmap'>('board');
+
+  const { data: project, isLoading, error } = useQuery({
+    queryKey: ['project', owner, name, number],
+    queryFn: () => api.get<any>(`/repos/${owner}/${name}/projects/${number}`),
+    enabled: !!owner && !!name && !!number,
+  });
+
+  const { data: columns } = useQuery({
+    queryKey: ['project-columns', owner, name, number],
+    queryFn: () => api.get<any[]>(`/repos/${owner}/${name}/projects/${number}/columns`),
+    enabled: !!owner && !!name && !!number,
+  });
+
+  const { data: cards } = useQuery({
+    queryKey: ['project-cards', owner, name, number],
+    queryFn: () => api.get<any[]>(`/repos/${owner}/${name}/projects/${number}/cards`),
+    enabled: !!owner && !!name && !!number,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-primary-dark">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="h-5 w-32 bg-surface rounded animate-pulse mb-4" />
+          <VeteranSkeleton variant="card" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !project) {
+    return (
+      <div className="min-h-screen bg-primary-dark">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <button
+            onClick={() => navigate(`/${owner}/${name}/projects`)}
+            className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary mb-4 transition-colors"
+          >
+            <ArrowLeft size={16} /> Back to projects
+          </button>
+          <VeteranEmptyState icon="alert" title="Project not found" description="The requested project could not be found." />
+        </div>
+      </div>
+    );
+  }
+
+  const p = project as any;
+  const projectColumns = (columns as any[]) ?? [];
+  const projectCards = (cards as any[]) ?? [];
 
   return (
     <div className="min-h-screen bg-primary-dark">
@@ -48,7 +75,7 @@ export function RepoProjectDetail() {
         </button>
 
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-bold text-text-primary">Q1 2026 Roadmap</h1>
+          <h1 className="text-xl font-bold text-text-primary">{p.name}</h1>
           <div className="flex bg-surface rounded-lg border border-border p-0.5">
             {[
               { id: 'board' as const, icon: Layout, label: 'Board' },
@@ -71,11 +98,14 @@ export function RepoProjectDetail() {
 
         <div className="min-h-[400px]">
           {view === 'board' && (
-            <BoardView columns={MOCK_COLUMNS} cards={MOCK_CARDS} />
+            <BoardView
+              columns={projectColumns}
+              cards={projectCards}
+            />
           )}
           {view === 'table' && (
             <TableView
-              cards={MOCK_CARDS}
+              cards={projectCards}
               columns={[
                 { id: 'title', name: 'Title', field: 'title' },
                 { id: 'status', name: 'Status', field: 'status' },
@@ -84,7 +114,15 @@ export function RepoProjectDetail() {
             />
           )}
           {view === 'roadmap' && (
-            <RoadmapView items={ROADMAP_ITEMS} />
+            <RoadmapView items={projectCards.map((card: any) => ({
+              id: card.id,
+              title: card.note || 'Untitled',
+              startDate: new Date(card.created_at || card.createdAt),
+              endDate: new Date(card.created_at || card.createdAt),
+              progress: 0,
+              assignee: card.creatorUsername,
+              status: card.contentType || 'note',
+            }))} />
           )}
         </div>
       </div>

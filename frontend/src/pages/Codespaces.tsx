@@ -1,41 +1,68 @@
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Terminal, Plus } from 'lucide-react';
 import { CodespaceList } from '@/components/codespaces/CodespaceList';
-import type { Codespace } from '@/types';
-
-const MOCK_CODESPACES: Codespace[] = [
-  {
-    id: 'cs-1', userId: 'u1', repositoryId: 'repo-1', branchName: 'main',
-    commitSha: 'abc123', displayName: 'my-project-main', machineType: 'basic',
-    cpu: 2, memory: 4, storage: 32, state: 'running', location: 'us-west',
-    containerImage: 'ubuntu:22.04', containerUser: 'veteran',
-    containerWorkspaceFolder: '/workspace', idleTimeoutMinutes: 30,
-    maxLifetimeMinutes: 480, shutdownTimeoutMinutes: 30,
-    ports: [], features: {}, gitStatus: { ahead: 0, behind: 0, hasUncommittedChanges: false, hasUnpushedChanges: false, currentBranch: 'main', recentBranches: [] },
-    url: 'https://cs-1.veteran.dev', webUrl: 'https://cs-1.veteran.dev',
-    lastActivityAt: new Date(Date.now() - 600000).toISOString(),
-    startedAt: new Date(Date.now() - 3600000).toISOString(),
-    stoppedAt: null, createdAt: new Date(Date.now() - 86400000).toISOString(),
-    updatedAt: new Date(Date.now() - 600000).toISOString(),
-  },
-  {
-    id: 'cs-2', userId: 'u1', repositoryId: 'repo-2', branchName: 'feature/new-ui',
-    commitSha: 'def456', displayName: 'my-project-feature', machineType: 'standard',
-    cpu: 4, memory: 8, storage: 64, state: 'stopped', location: 'us-east',
-    containerImage: 'ubuntu:22.04', containerUser: 'veteran',
-    containerWorkspaceFolder: '/workspace', idleTimeoutMinutes: 30,
-    maxLifetimeMinutes: 480, shutdownTimeoutMinutes: 30,
-    ports: [], features: {}, gitStatus: { ahead: 3, behind: 1, hasUncommittedChanges: true, hasUnpushedChanges: true, currentBranch: 'feature/new-ui', recentBranches: ['main'] },
-    url: null, webUrl: null,
-    lastActivityAt: new Date(Date.now() - 86400000).toISOString(),
-    startedAt: null, stoppedAt: new Date(Date.now() - 86400000).toISOString(),
-    createdAt: new Date(Date.now() - 172800000).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000).toISOString(),
-  },
-];
+import { codespaceApi } from '@lib/api/endpoints/codespaces';
+import { VeteranSkeleton } from '@ui/VeteranSkeleton';
+import { VeteranEmptyState } from '@ui/VeteranEmptyState';
+import toast from 'react-hot-toast';
 
 export function CodespacesPage() {
+  const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
+
+  const { data: codespaces, isLoading, error } = useQuery({
+    queryKey: ['codespaces'],
+    queryFn: () => codespaceApi.list(),
+  });
+
+  const startMutation = useMutation({
+    mutationFn: (id: string) => codespaceApi.start(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['codespaces'] });
+      toast.success('Codespace starting...');
+    },
+  });
+
+  const stopMutation = useMutation({
+    mutationFn: (id: string) => codespaceApi.stop(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['codespaces'] });
+      toast.success('Codespace stopped');
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => codespaceApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['codespaces'] });
+      toast.success('Codespace deleted');
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-primary-dark">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Terminal size={24} className="text-accent" />
+            <div className="h-7 w-40 bg-surface rounded animate-pulse" />
+          </div>
+          <VeteranSkeleton variant="card" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-primary-dark">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <VeteranEmptyState icon="alert" title="Failed to load codespaces" description="There was an error loading your codespaces." />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-primary-dark">
@@ -53,14 +80,23 @@ export function CodespacesPage() {
           </button>
         </div>
 
-        <CodespaceList
-          codespaces={MOCK_CODESPACES}
-          onStart={(id) => console.log('Start', id)}
-          onStop={(id) => console.log('Stop', id)}
-          onDelete={(id) => console.log('Delete', id)}
-          onOpen={(id) => console.log('Open', id)}
-          onCreate={() => setShowCreate(true)}
-        />
+        {!codespaces || codespaces.length === 0 ? (
+          <VeteranEmptyState
+            icon="code"
+            title="No codespaces"
+            description="Create a codespace to start coding in the cloud"
+            action={{ label: 'Create codespace', onClick: () => setShowCreate(true) }}
+          />
+        ) : (
+          <CodespaceList
+            codespaces={codespaces}
+            onStart={(id) => startMutation.mutate(id)}
+            onStop={(id) => stopMutation.mutate(id)}
+            onDelete={(id) => deleteMutation.mutate(id)}
+            onOpen={(id) => window.open(`https://cs-${id}.veteran.dev`, '_blank')}
+            onCreate={() => setShowCreate(true)}
+          />
+        )}
       </div>
     </div>
   );

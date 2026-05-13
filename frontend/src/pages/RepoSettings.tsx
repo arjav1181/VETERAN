@@ -1,13 +1,18 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { repoApi, type Repo } from '@lib/api/endpoints/repos';
+import { getApiError } from '@lib/api/client';
 import { VeteranTabs, type TabItem } from '@ui/VeteranTabs';
 import { VeteranButton } from '@ui/VeteranButton';
 import { VeteranInput } from '@ui/VeteranInput';
 import { VeteranBadge } from '@ui/VeteranBadge';
 import { VeteranModal } from '@ui/VeteranModal';
+import { VeteranSkeleton } from '@ui/VeteranSkeleton';
+import { VeteranEmptyState } from '@ui/VeteranEmptyState';
 import {
   Settings,
   Shield,
@@ -22,6 +27,7 @@ import {
   Trash2,
   Users,
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const repoInfoSchema = z.object({
   name: z.string().min(1, 'Name is required').regex(/^[a-zA-Z0-9_.-]+$/, 'Invalid repository name'),
@@ -31,16 +37,78 @@ const repoInfoSchema = z.object({
 
 export function RepoSettings() {
   const { owner, repo } = useParams<{ owner: string; repo: string }>();
+  const queryClient = useQueryClient();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { data: repoData, isLoading, error } = useQuery({
+    queryKey: ['repo', owner, repo],
+    queryFn: () => repoApi.get(owner!, repo!),
+    enabled: !!owner && !!repo,
+  });
+
+  const { register, handleSubmit, formState: { errors }, reset } = useForm({
     resolver: zodResolver(repoInfoSchema),
     defaultValues: {
-      name: repo,
-      description: 'A repository for great things',
+      name: repo || '',
+      description: '',
       homepage: '',
     },
   });
+
+  useEffect(() => {
+    if (repoData) {
+      reset({
+        name: repoData.name || repo || '',
+        description: repoData.description || '',
+        homepage: '',
+      });
+    }
+  }, [repoData, reset, repo]);
+
+  const updateMutation = useMutation({
+    mutationFn: (data: { name?: string; description?: string; homepage?: string }) =>
+      repoApi.update(owner!, repo!, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['repo', owner, repo] });
+      toast.success('Repository updated');
+    },
+    onError: (err) => {
+      const apiError = getApiError(err);
+      toast.error(apiError.message);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: () => repoApi.delete(owner!, repo!),
+    onSuccess: () => {
+      toast.success('Repository deleted');
+    },
+    onError: (err) => {
+      const apiError = getApiError(err);
+      toast.error(apiError.message);
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div>
+        <div className="mb-6">
+          <VeteranSkeleton variant="text" className="w-64 h-8" />
+        </div>
+        <VeteranSkeleton variant="card" />
+      </div>
+    );
+  }
+
+  if (error || !repoData) {
+    return (
+      <VeteranEmptyState icon="alert" title="Failed to load repository" description="Could not fetch repository settings." />
+    );
+  }
+
+  const onSave = (data: { name?: string; description?: string; homepage?: string }) => {
+    updateMutation.mutate(data);
+  };
 
   const tabs: TabItem[] = [
     {
@@ -48,8 +116,7 @@ export function RepoSettings() {
       label: 'General',
       icon: <Settings className="w-4 h-4" />,
       content: (
-        <form onSubmit={handleSubmit((d) => console.log(d))} className="space-y-8 max-w-2xl">
-          {/* Repository name */}
+        <form onSubmit={handleSubmit(onSave)} className="space-y-8 max-w-2xl">
           <section>
             <h3 className="text-sm font-semibold text-[rgb(var(--veteran-fg))] mb-4">Repository Details</h3>
             <div className="space-y-4">
@@ -76,25 +143,24 @@ export function RepoSettings() {
               />
             </div>
             <div className="mt-4 flex items-center gap-4">
-              <VeteranButton type="submit" icon={<Save className="w-4 h-4" />}>
+              <VeteranButton type="submit" icon={<Save className="w-4 h-4" />} loading={updateMutation.isPending}>
                 Save changes
               </VeteranButton>
             </div>
           </section>
 
-          {/* Visibility */}
           <section className="pt-8 border-t border-surface-200 dark:border-surface-700">
             <h3 className="text-sm font-semibold text-[rgb(var(--veteran-fg))] mb-4">Visibility</h3>
             <div className="space-y-3">
               <label className="flex items-center gap-3 p-4 rounded-lg border border-surface-200 dark:border-surface-700 cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-800">
-                <input type="radio" name="visibility" value="public" defaultChecked className="text-veteran-600 focus:ring-veteran-500" />
+                <input type="radio" name="visibility" value="public" defaultChecked={!repoData.isPrivate} className="text-veteran-600 focus:ring-veteran-500" />
                 <div>
                   <p className="text-sm font-medium text-[rgb(var(--veteran-fg))]">Public</p>
                   <p className="text-xs text-surface-500">Anyone can see this repository</p>
                 </div>
               </label>
               <label className="flex items-center gap-3 p-4 rounded-lg border border-surface-200 dark:border-surface-700 cursor-pointer hover:bg-surface-50 dark:hover:bg-surface-800">
-                <input type="radio" name="visibility" value="private" className="text-veteran-600 focus:ring-veteran-500" />
+                <input type="radio" name="visibility" value="private" defaultChecked={repoData.isPrivate} className="text-veteran-600 focus:ring-veteran-500" />
                 <div>
                   <p className="text-sm font-medium text-[rgb(var(--veteran-fg))]">Private</p>
                   <p className="text-xs text-surface-500">Only you and collaborators can see this repository</p>
@@ -103,14 +169,12 @@ export function RepoSettings() {
             </div>
           </section>
 
-          {/* Archive */}
           <section className="pt-8 border-t border-surface-200 dark:border-surface-700">
             <h3 className="text-sm font-semibold text-[rgb(var(--veteran-fg))] mb-2">Archive repository</h3>
             <p className="text-sm text-surface-500 mb-4">Archiving will make the repository read-only.</p>
             <VeteranButton variant="secondary">Archive this repository</VeteranButton>
           </section>
 
-          {/* Delete */}
           <section className="pt-8 border-t border-red-200 dark:border-red-900">
             <h3 className="text-sm font-semibold text-red-600 dark:text-red-400 mb-2">Danger Zone</h3>
             <p className="text-sm text-surface-500 mb-4">
@@ -128,7 +192,7 @@ export function RepoSettings() {
       id: 'branches',
       label: 'Branches',
       icon: <GitBranch className="w-4 h-4" />,
-      content: <BranchesSettings />,
+      content: <BranchesSettings owner={owner!} repo={repo!} />,
     },
     {
       id: 'collaborators',
@@ -169,7 +233,7 @@ export function RepoSettings() {
         footer={
           <>
             <VeteranButton variant="ghost" onClick={() => setShowDeleteModal(false)}>Cancel</VeteranButton>
-            <VeteranButton variant="danger" onClick={() => {}}>
+            <VeteranButton variant="danger" onClick={() => deleteMutation.mutate()} loading={deleteMutation.isPending}>
               I understand, delete this repository
             </VeteranButton>
           </>
@@ -187,7 +251,17 @@ export function RepoSettings() {
   );
 }
 
-function BranchesSettings() {
+function BranchesSettings({ owner, repo }: { owner: string; repo: string }) {
+  const { data: branches, isLoading } = useQuery({
+    queryKey: ['branches', owner, repo],
+    queryFn: () => repoApi.getBranches(owner, repo),
+    enabled: !!owner && !!repo,
+  });
+
+  if (isLoading) {
+    return <VeteranSkeleton variant="card" />;
+  }
+
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-center justify-between">
@@ -196,13 +270,13 @@ function BranchesSettings() {
       </div>
 
       <div className="space-y-2">
-        {['main', 'develop', 'release/*'].map((branch) => (
-          <div key={branch} className="card p-4 flex items-center justify-between">
+        {(branches || []).map((branch) => (
+          <div key={branch.name} className="card p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <GitBranch className="w-4 h-4 text-surface-400" />
               <div>
-                <p className="text-sm font-medium text-[rgb(var(--veteran-fg))]">{branch}</p>
-                <p className="text-xs text-surface-500">Requires pull request reviews, status checks</p>
+                <p className="text-sm font-medium text-[rgb(var(--veteran-fg))]">{branch.name}</p>
+                <p className="text-xs text-surface-500">{branch.protected ? 'Protected' : 'Not protected'} · {branch.commit.sha.slice(0, 7)}</p>
               </div>
             </div>
             <VeteranButton variant="ghost" size="sm">Edit</VeteranButton>
@@ -210,12 +284,18 @@ function BranchesSettings() {
         ))}
       </div>
 
+      {(!branches || branches.length === 0) && (
+        <div className="card p-8 text-center">
+          <p className="text-sm text-surface-500">No branches found.</p>
+        </div>
+      )}
+
       <div className="card p-4">
         <h3 className="text-sm font-semibold text-[rgb(var(--veteran-fg))] mb-3">Default branch</h3>
         <select className="w-full rounded-lg border border-surface-300 dark:border-surface-600 bg-[rgb(var(--veteran-bg))] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-veteran-500/50">
-          <option>main</option>
-          <option>develop</option>
-          <option>master</option>
+          {(branches || []).map((b) => (
+            <option key={b.name} value={b.name}>{b.name}</option>
+          ))}
         </select>
       </div>
     </div>

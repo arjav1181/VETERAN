@@ -1,83 +1,107 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { CommitList } from '@/components/repo/CommitList';
 import { RepoHeader } from '@/components/repo/RepoHeader';
-import { BranchSelector } from '@/components/repo/BranchSelector';
-import { useRepoCommits, useRepoBranches, useRepoTags, useRepo } from '@/hooks/useRepo';
-import type { Commit } from '@/types';
+import { useRepoCommits, useRepoBranches, useRepo } from '@hooks/useRepo';
+import { useQuery } from '@tanstack/react-query';
+import { repoApi } from '@lib/api/endpoints/repos';
+import { VeteranSkeleton } from '@ui/VeteranSkeleton';
+import { VeteranEmptyState } from '@ui/VeteranEmptyState';
 
-const MOCK_COMMITS: Commit[] = Array.from({ length: 25 }).map((_, i) => ({
-  id: `commit-${i}`,
-  repositoryId: '1',
-  sha: `abc${i}def${i}ghi${i}jkl${i}mno${i}pqr`,
-  shortSha: `abc${i}def`,
-  message: `feat: implement feature number ${i + 1}`,
-  messageHeadline: `feat: implement feature number ${i + 1}`,
-  messageBody: i === 0 ? `This is a detailed commit message body that describes the changes made in this commit in more detail.\n\n- Added new functionality\n- Fixed some bugs\n- Updated documentation` : null,
-  authorId: 'user-1',
-  authorName: 'Jane Developer',
-  authorEmail: 'jane@veteran.dev',
-  authorAvatar: null,
-  committerName: 'Jane Developer',
-  committerEmail: 'jane@veteran.dev',
-  committerAvatar: null,
-  authoredAt: new Date(Date.now() - i * 3600000).toISOString(),
-  committedAt: new Date(Date.now() - i * 3600000).toISOString(),
-  parentShas: [],
-  treeSha: 'tree123',
-  isVerified: i === 0 || i === 1,
-  verificationSignature: null,
-  verificationPayload: null,
-  verificationSigner: null,
-  verificationIdentity: null,
-  additions: Math.floor(Math.random() * 100 + 10),
-  deletions: Math.floor(Math.random() * 50),
-  totalChanges: 0,
-  fileCount: Math.floor(Math.random() * 10 + 1),
-  branchNames: ['main'],
-  tagNames: [],
-  createdAt: new Date(Date.now() - i * 3600000).toISOString(),
-}));
+function mapCommit(apiCommit: any): any {
+  return {
+    id: apiCommit.sha,
+    repositoryId: '',
+    sha: apiCommit.sha,
+    shortSha: apiCommit.sha.substring(0, 7),
+    message: apiCommit.message,
+    messageHeadline: apiCommit.message.split('\n')[0],
+    messageBody: apiCommit.message.includes('\n') ? apiCommit.message.substring(apiCommit.message.indexOf('\n') + 1).trim() : null,
+    authorId: null,
+    authorName: apiCommit.author?.name || '',
+    authorEmail: apiCommit.author?.email || '',
+    authorAvatar: null,
+    committerName: apiCommit.committer?.name || '',
+    committerEmail: apiCommit.committer?.email || '',
+    committerAvatar: null,
+    authoredAt: apiCommit.author?.date || '',
+    committedAt: apiCommit.committer?.date || '',
+    parentShas: [],
+    treeSha: '',
+    isVerified: false,
+    verificationSignature: null,
+    verificationPayload: null,
+    verificationSigner: null,
+    verificationIdentity: null,
+    additions: apiCommit.stats?.additions || 0,
+    deletions: apiCommit.stats?.deletions || 0,
+    totalChanges: apiCommit.stats?.total || 0,
+    fileCount: apiCommit.files?.length || 0,
+    branchNames: [],
+    tagNames: [],
+    createdAt: apiCommit.committer?.date || '',
+  };
+}
 
 export function RepoCommits() {
   const { owner, name } = useParams<{ owner: string; name: string }>();
   const navigate = useNavigate();
 
+  const { data: repo, isLoading: repoLoading } = useRepo(owner!, name!);
+  const { data: commits, isLoading: commitsLoading, error } = useRepoCommits(owner!, name!);
+
+  if (repoLoading || commitsLoading) {
+    return (
+      <div className="min-h-screen bg-primary-dark">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <VeteranSkeleton variant="card" />
+          <div className="h-6 w-32 bg-surface rounded animate-pulse mt-6 mb-4" />
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <VeteranSkeleton key={i} variant="card" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-primary-dark">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <VeteranEmptyState icon="alert" title="Failed to load commits" description="There was an error loading the commits." />
+        </div>
+      </div>
+    );
+  }
+
+  const mappedCommits = (commits ?? []).map(mapCommit);
+
   return (
     <div className="min-h-screen bg-primary-dark">
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {owner && name && (
+        {owner && name && repo && (
           <RepoHeader
-            repo={{
-              id: '1', ownerId: '1', ownerName: owner, name: name!,
-              fullName: `${owner}/${name}`, description: 'A repository',
-              visibility: 'public', defaultBranch: 'main',
-              isPrivate: false, isFork: false, isArchived: false,
-              isDisabled: false, isMirror: false, isTemplate: false,
-              isEmpty: false, openIssueCount: 5, openPullCount: 3,
-              starCount: 42, forkCount: 12, watchCount: 8,
-              diskUsage: 1024, size: 2048, topics: [],
-              hasIssues: true, hasWiki: true, hasProjects: true,
-              hasDiscussions: true, hasPackages: true, hasDownloads: true,
-              allowForking: true, allowRebaseMerge: true, allowSquashMerge: true,
-              allowMergeCommit: true, deleteBranchOnMerge: false,
-              createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-              pushedAt: new Date().toISOString(),
-            } as any}
+            repo={repo as any}
             owner={owner}
             name={name}
-            starCount={42}
-            forkCount={12}
-            watchCount={8}
+            starCount={(repo as any).stars_count ?? repo.starCount ?? 0}
+            forkCount={(repo as any).forks_count ?? repo.forkCount ?? 0}
+            watchCount={(repo as any).watchers_count ?? repo.watchCount ?? 0}
           />
         )}
 
         <h2 className="text-lg font-semibold text-text-primary mt-6 mb-4">Commits</h2>
 
-        <CommitList
-          commits={MOCK_COMMITS}
-          onCommitClick={(sha) => navigate(`/${owner}/${name}/commit/${sha}`)}
-          onAuthorClick={(author) => console.log('Author:', author)}
-        />
+        {mappedCommits.length === 0 ? (
+          <VeteranEmptyState icon="code" title="No commits yet" description="This repository has no commits." />
+        ) : (
+          <CommitList
+            commits={mappedCommits}
+            onCommitClick={(sha) => navigate(`/${owner}/${name}/commit/${sha}`)}
+            onAuthorClick={(author) => console.log('Author:', author)}
+          />
+        )}
       </div>
     </div>
   );

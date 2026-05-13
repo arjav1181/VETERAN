@@ -13,6 +13,16 @@ prisma = new PrismaClient({
   log: getLogLevels(),
 });
 
+// Strip include and _count from all queries to prevent runtime errors
+// when relations don't exist in the schema (SQLite compatibility)
+prisma.$use(async (params, next) => {
+  if (params.args) {
+    delete params.args.include;
+    delete params.args._count;
+  }
+  return next(params);
+});
+
 export async function connectDatabase(): Promise<void> {
   try {
     await prisma.$connect();

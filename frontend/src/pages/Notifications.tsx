@@ -1,48 +1,68 @@
 import { useState } from 'react';
 import { Bell } from 'lucide-react';
 import { NotificationInbox } from '@/components/notifications/NotificationInbox';
-import type { Notification } from '@/types';
+import { useNotifications, useMarkAsRead, useMarkAllAsRead } from '@hooks/useNotifications';
+import { VeteranSkeleton } from '@ui/VeteranSkeleton';
+import { VeteranEmptyState } from '@ui/VeteranEmptyState';
 
-const MOCK_NOTIFICATIONS: Notification[] = Array.from({ length: 25 }).map((_, i) => ({
-  id: `notif-${i}`,
-  userId: 'u1',
-  type: (['mention', 'issue_assigned', 'pr_review_requested', 'pr_merged', 'security_alert'] as const)[i % 5],
-  title: [
-    '@jane-dev mentioned you in issue #101',
-    'You were assigned to issue #102',
-    'Review requested on PR #201',
-    'PR #202 was merged to main',
-    'Security alert: Dependabot found vulnerability',
-  ][i % 5],
-  body: [
-    'Hey team, can someone look at this?',
-    'Fix login redirect loop',
-    'Implement new authentication flow',
-    'Update API documentation',
-    'lodash prototype pollution',
-  ][i % 5],
-  bodyHtml: null,
-  link: null,
-  icon: null,
-  isRead: i >= 10,
-  isArchived: i >= 20,
-  isPinned: false,
-  repositoryId: i < 15 ? 'repo-1' : 'repo-2',
-  repositoryFullName: i < 15 ? 'owner/repo-1' : 'owner/repo-2',
-  senderId: 'u2',
-  senderUsername: ['jane-dev', 'john-doe', 'alice'][i % 3],
-  senderAvatar: null,
-  threadId: null,
-  threadType: i % 3 === 0 ? 'issue' : i % 3 === 1 ? 'pull_request' : 'commit',
-  action: null,
-  metadata: null,
-  readAt: i >= 10 ? new Date(Date.now() - i * 3600000).toISOString() : null,
-  archivedAt: i >= 20 ? new Date(Date.now() - i * 3600000).toISOString() : null,
-  createdAt: new Date(Date.now() - i * 3600000).toISOString(),
-  updatedAt: new Date(Date.now() - i * 3600000).toISOString(),
-}));
+function mapNotification(n: any): any {
+  return {
+    id: n.id,
+    userId: n.userId || n.user_id || '',
+    type: n.type || 'mention',
+    title: n.subject?.title || n.title || '',
+    body: n.body || n.subject?.title || '',
+    bodyHtml: n.bodyHtml || n.body_html || null,
+    link: n.url || n.link || null,
+    icon: n.icon || null,
+    isRead: n.read ?? n.isRead ?? !n.unread ?? false,
+    isArchived: n.isArchived || n.archived || false,
+    isPinned: n.isPinned || false,
+    repositoryId: n.repository?.id || n.repositoryId || null,
+    repositoryFullName: n.repository?.full_name || n.repositoryFullName || null,
+    senderId: n.senderId || n.sender_id || null,
+    senderUsername: n.senderUsername || n.sender?.username || null,
+    senderAvatar: n.senderAvatar || n.sender?.avatar_url || null,
+    threadId: n.threadId || n.thread_id || null,
+    threadType: n.threadType || n.subject?.type || null,
+    action: n.action || null,
+    metadata: n.metadata || null,
+    readAt: n.readAt || n.read_at || null,
+    archivedAt: n.archivedAt || n.archived_at || null,
+    createdAt: n.created_at || n.updatedAt || n.updated_at || '',
+    updatedAt: n.updated_at || n.updatedAt || '',
+  };
+}
 
 export function NotificationsPage() {
+  const { data: notifications, isLoading, error } = useNotifications();
+  const markAsRead = useMarkAsRead();
+  const markAllAsRead = useMarkAllAsRead();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-primary-dark">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="flex items-center gap-3 mb-6">
+            <Bell size={24} className="text-accent" />
+            <div className="h-7 w-40 bg-surface rounded animate-pulse" />
+          </div>
+          <VeteranSkeleton variant="card" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-primary-dark">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <VeteranEmptyState icon="alert" title="Failed to load notifications" description="There was an error loading your notifications." />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-primary-dark">
       <div className="max-w-4xl mx-auto px-4 py-6">
@@ -52,9 +72,9 @@ export function NotificationsPage() {
         </div>
 
         <NotificationInbox
-          notifications={MOCK_NOTIFICATIONS}
-          onMarkRead={(id) => console.log('Mark read:', id)}
-          onMarkAllRead={() => console.log('Mark all read')}
+          notifications={(notifications ?? []).map(mapNotification)}
+          onMarkRead={(id) => markAsRead.mutate(id)}
+          onMarkAllRead={() => markAllAsRead.mutate()}
           onArchive={(id) => console.log('Archive:', id)}
         />
       </div>

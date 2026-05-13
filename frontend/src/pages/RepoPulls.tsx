@@ -2,73 +2,87 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import { PRList } from '@/components/pulls/PRList';
-import type { PullRequest } from '@/types';
+import { usePulls } from '@hooks/usePulls';
+import { VeteranSkeleton } from '@ui/VeteranSkeleton';
+import { VeteranEmptyState } from '@ui/VeteranEmptyState';
 
-const MOCK_PULLS: PullRequest[] = Array.from({ length: 12 }).map((_, i) => ({
-  id: `pr-${i}`,
-  repositoryId: '1',
-  number: 200 + i,
-  title: [
-    'Implement new authentication flow with OAuth support',
-    'Fix data race in concurrent request handler',
-    'Add real-time notification system',
-    'Refactor database access layer for performance',
-    'Update UI components to use new design system',
-    'Add end-to-end testing infrastructure',
-    'Implement file upload with progress tracking',
-    'Fix cross-origin resource sharing issues',
-    'Add user preference management API',
-    'Implement search with Elasticsearch integration',
-    'Update deployment pipeline for zero-downtime',
-    'Add API versioning support',
-  ][i],
-  body: 'Pull request description...',
-  bodyHtml: null,
-  state: i < 8 ? 'open' : i < 10 ? 'closed' : 'merged',
-  isDraft: i < 2,
-  isLocked: false,
-  isMergeable: i < 6 ? true : false,
-  mergeableState: i < 6 ? 'clean' : 'unknown',
-  mergeCommitSha: i >= 10 ? 'abc123' : null,
-  mergeMethod: i >= 10 ? 'merge' : null,
-  mergedById: i >= 10 ? 'u1' : null,
-  mergedByUsername: i >= 10 ? 'jane-dev' : null,
-  mergedByAvatar: null,
-  mergedAt: i >= 10 ? new Date(Date.now() - i * 86400000).toISOString() : null,
-  closedById: i >= 8 && i < 10 ? 'u2' : null,
-  closedByUsername: i >= 8 && i < 10 ? 'john-doe' : null,
-  closedAt: i >= 8 && i < 10 ? new Date(Date.now() - i * 86400000).toISOString() : null,
-  authorId: 'u' + ((i % 4) + 1),
-  authorUsername: ['jane-dev', 'john-doe', 'alice', 'bob'][i % 4],
-  authorAvatar: null,
-  headRef: `feature/${['auth', 'fix', 'notifications', 'refactor', 'design', 'e2e', 'upload', 'cors', 'prefs', 'search', 'deploy', 'versioning'][i]}`,
-  headSha: `head${i}123`,
-  headRepoId: '1',
-  headRepoFullName: `owner/repo`,
-  baseRef: 'main',
-  baseSha: 'base123',
-  baseRepoId: '1',
-  additions: Math.floor(Math.random() * 200 + 50),
-  deletions: Math.floor(Math.random() * 100 + 10),
-  changedFiles: Math.floor(Math.random() * 15 + 3),
-  commentCount: Math.floor(Math.random() * 20),
-  reviewCommentCount: Math.floor(Math.random() * 10),
-  commitCount: Math.floor(Math.random() * 10 + 1),
-  labelIds: i < 3 ? ['l1', 'l2'] : i < 6 ? ['l2'] : [],
-  assigneeIds: i < 4 ? ['u2'] : [],
-  milestoneId: i < 5 ? 'm1' : null,
-  autoMergeEnabled: false,
-  autoMergeMethod: null,
-  draftAt: i < 2 ? new Date().toISOString() : null,
-  readyForReviewAt: i < 2 ? null : new Date(Date.now() - i * 86400000).toISOString(),
-  createdAt: new Date(Date.now() - (i + 1) * 86400000).toISOString(),
-  updatedAt: new Date(Date.now() - i * 3600000).toISOString(),
-}));
+function mapPR(apiPr: any): any {
+  return {
+    id: apiPr.id,
+    repositoryId: apiPr.repo_id || apiPr.repositoryId || '',
+    number: apiPr.number,
+    title: apiPr.title,
+    body: apiPr.body || '',
+    bodyHtml: apiPr.bodyHtml || apiPr.body_html || null,
+    state: apiPr.state,
+    isDraft: apiPr.draft || apiPr.isDraft || false,
+    isLocked: apiPr.locked || apiPr.isLocked || false,
+    isMergeable: apiPr.mergeable ?? apiPr.isMergeable ?? null,
+    mergeableState: apiPr.mergeableState || apiPr.mergeable_state || 'unknown',
+    mergeCommitSha: apiPr.merge_commit_sha || apiPr.mergeCommitSha || null,
+    mergeMethod: apiPr.mergeMethod || apiPr.merge_method || null,
+    mergedById: apiPr.mergedBy?.id || apiPr.mergedById || apiPr.merged_by_id || null,
+    mergedByUsername: apiPr.mergedBy?.username || apiPr.mergedByUsername || apiPr.merged_by_username || null,
+    mergedByAvatar: apiPr.mergedBy?.avatar_url || apiPr.mergedByAvatar || null,
+    mergedAt: apiPr.merged_at || apiPr.mergedAt || null,
+    closedById: apiPr.closedById || apiPr.closed_by_id || null,
+    closedByUsername: apiPr.closedByUsername || apiPr.closed_by_username || null,
+    closedAt: apiPr.closed_at || apiPr.closedAt || null,
+    authorId: apiPr.author?.id || apiPr.authorId || '',
+    authorUsername: apiPr.author?.username || apiPr.authorUsername || '',
+    authorAvatar: apiPr.author?.avatar_url || apiPr.authorAvatar || null,
+    headRef: apiPr.head?.ref || apiPr.headRef || '',
+    headSha: apiPr.head?.sha || apiPr.headSha || '',
+    headRepoId: apiPr.head?.repo?.id || apiPr.headRepoId || '',
+    headRepoFullName: apiPr.head?.repo?.full_name || apiPr.headRepoFullName || '',
+    baseRef: apiPr.base?.ref || apiPr.baseRef || '',
+    baseSha: apiPr.base?.sha || apiPr.baseSha || '',
+    baseRepoId: apiPr.base?.repo?.id || apiPr.baseRepoId || '',
+    additions: apiPr.additions || 0,
+    deletions: apiPr.deletions || 0,
+    changedFiles: apiPr.changed_files ?? apiPr.changedFiles ?? 0,
+    commentCount: apiPr.comments_count ?? apiPr.commentCount ?? 0,
+    reviewCommentCount: apiPr.review_comments_count ?? apiPr.reviewCommentCount ?? 0,
+    commitCount: apiPr.commits_count ?? apiPr.commitCount ?? 0,
+    labelIds: (apiPr.labels || []).map((l: any) => l.id || l),
+    assigneeIds: (apiPr.assignees || []).map((a: any) => a.id || a),
+    milestoneId: apiPr.milestone?.id || apiPr.milestoneId || null,
+    autoMergeEnabled: apiPr.autoMergeEnabled || apiPr.auto_merge_enabled || false,
+    autoMergeMethod: apiPr.autoMergeMethod || apiPr.auto_merge_method || null,
+    draftAt: apiPr.draftAt || apiPr.draft_at || null,
+    readyForReviewAt: apiPr.readyForReviewAt || apiPr.ready_for_review_at || null,
+    createdAt: apiPr.created_at || apiPr.createdAt || '',
+    updatedAt: apiPr.updated_at || apiPr.updatedAt || '',
+  };
+}
 
 export function RepoPulls() {
   const { owner, name } = useParams<{ owner: string; name: string }>();
   const navigate = useNavigate();
   const [state, setState] = useState<'open' | 'closed' | 'merged'>('open');
+
+  const { data: pulls, isLoading, error } = usePulls(owner!, name!, { state });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-primary-dark">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="h-7 w-40 bg-surface rounded animate-pulse mb-6" />
+          <VeteranSkeleton variant="card" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-primary-dark">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <VeteranEmptyState icon="alert" title="Failed to load pull requests" description="There was an error loading the pull requests." />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-primary-dark">
@@ -81,7 +95,7 @@ export function RepoPulls() {
         </div>
 
         <PRList
-          pulls={MOCK_PULLS}
+          pulls={(pulls ?? []).map(mapPR)}
           state={state}
           onStateChange={setState}
           onPRClick={(number) => navigate(`/${owner}/${name}/pulls/${number}`)}

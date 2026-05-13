@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useMutation } from '@tanstack/react-query';
 import { VeteranTabs, type TabItem } from '@ui/VeteranTabs';
 import { VeteranButton } from '@ui/VeteranButton';
 import { VeteranInput } from '@ui/VeteranInput';
 import { VeteranAvatar } from '@ui/VeteranAvatar';
 import { useAuthStore } from '@stores/authStore';
+import { authApi } from '@lib/api/endpoints/auth';
+import toast from 'react-hot-toast';
 import {
   User,
   Bell,
@@ -40,10 +43,33 @@ export function UserSettings() {
   const { user, updateUser } = useAuthStore();
   const [saving, setSaving] = useState(false);
 
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: any) => authApi.updateProfile(data),
+    onSuccess: (res: any) => {
+      toast.success('Profile updated');
+      if (res?.user) updateUser(res.user);
+    },
+    onError: () => {
+      toast.error('Failed to update profile');
+    },
+  });
+
+  const updatePasswordMutation = useMutation({
+    mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
+      authApi.updatePassword(currentPassword, newPassword),
+    onSuccess: () => {
+      toast.success('Password updated');
+      passwordForm.reset();
+    },
+    onError: () => {
+      toast.error('Failed to update password');
+    },
+  });
+
   const profileForm = useForm({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      name: user?.name || '',
+      name: user?.name || user?.displayName || '',
       bio: '',
       company: '',
       location: '',
@@ -61,7 +87,7 @@ export function UserSettings() {
       id: 'profile',
       label: 'Profile',
       icon: <User className="w-4 h-4" />,
-      content: <ProfileSettings form={profileForm} saving={saving} />,
+      content: <ProfileSettings form={profileForm} saving={updateProfileMutation.isPending} />,
     },
     {
       id: 'account',
@@ -108,14 +134,22 @@ export function UserSettings() {
 
 function ProfileSettings({ form, saving }: { form: ReturnType<typeof useForm>; saving: boolean }) {
   const { user } = useAuthStore();
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: any) => authApi.updateProfile(data),
+    onSuccess: (res: any) => {
+      toast.success('Profile updated');
+    },
+    onError: () => {
+      toast.error('Failed to update profile');
+    },
+  });
 
   return (
-    <form onSubmit={form.handleSubmit(() => {})} className="space-y-8 max-w-2xl">
-      {/* Avatar */}
+    <form onSubmit={form.handleSubmit((data) => updateProfileMutation.mutate(data))} className="space-y-8 max-w-2xl">
       <section>
         <h3 className="text-sm font-semibold text-[rgb(var(--veteran-fg))] mb-4">Profile Picture</h3>
         <div className="flex items-center gap-4">
-          <VeteranAvatar src={user?.avatar_url} name={user?.name || user?.username || ''} size="xl" />
+          <VeteranAvatar src={user?.avatar_url || user?.avatarUrl} name={user?.name || user?.displayName || user?.username || ''} size="xl" />
           <div>
             <VeteranButton variant="secondary" size="sm" icon={<Upload className="w-4 h-4" />}>
               Upload new picture
@@ -125,7 +159,6 @@ function ProfileSettings({ form, saving }: { form: ReturnType<typeof useForm>; s
         </div>
       </section>
 
-      {/* Basic info */}
       <section>
         <h3 className="text-sm font-semibold text-[rgb(var(--veteran-fg))] mb-4">Basic Information</h3>
         <div className="space-y-4">
@@ -142,7 +175,6 @@ function ProfileSettings({ form, saving }: { form: ReturnType<typeof useForm>; s
         </div>
       </section>
 
-      {/* Links */}
       <section>
         <h3 className="text-sm font-semibold text-[rgb(var(--veteran-fg))] mb-4">Links</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -153,7 +185,7 @@ function ProfileSettings({ form, saving }: { form: ReturnType<typeof useForm>; s
         </div>
       </section>
 
-      <VeteranButton type="submit" loading={saving} icon={<Save className="w-4 h-4" />}>
+      <VeteranButton type="submit" loading={updateProfileMutation.isPending} icon={<Save className="w-4 h-4" />}>
         Save profile
       </VeteranButton>
     </form>
@@ -161,8 +193,20 @@ function ProfileSettings({ form, saving }: { form: ReturnType<typeof useForm>; s
 }
 
 function AccountSettings({ form }: { form: ReturnType<typeof useForm> }) {
+  const updatePasswordMutation = useMutation({
+    mutationFn: ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) =>
+      authApi.updatePassword(currentPassword, newPassword),
+    onSuccess: () => {
+      toast.success('Password updated');
+      form.reset();
+    },
+    onError: () => {
+      toast.error('Failed to update password');
+    },
+  });
+
   return (
-    <form onSubmit={form.handleSubmit(() => {})} className="space-y-8 max-w-2xl">
+    <form onSubmit={form.handleSubmit((data) => updatePasswordMutation.mutate(data))} className="space-y-8 max-w-2xl">
       <section>
         <h3 className="text-sm font-semibold text-[rgb(var(--veteran-fg))] mb-4">Change Password</h3>
         <div className="space-y-4">
@@ -186,7 +230,7 @@ function AccountSettings({ form }: { form: ReturnType<typeof useForm> }) {
           />
         </div>
         <div className="mt-4">
-          <VeteranButton type="submit">Update password</VeteranButton>
+          <VeteranButton type="submit" loading={updatePasswordMutation.isPending}>Update password</VeteranButton>
         </div>
       </section>
 
@@ -229,7 +273,7 @@ function NotificationSettings() {
 
 function AppearanceSettings() {
   const { theme, toggleTheme } = useAuthStore();
-  const currentTheme = useAuthStore.getState ? 'dark' : 'light';
+  const currentTheme = theme || 'dark';
 
   return (
     <div className="space-y-6 max-w-2xl">
@@ -239,7 +283,7 @@ function AppearanceSettings() {
           {(['light', 'dark'] as const).map((t) => (
             <button
               key={t}
-              onClick={() => {}}
+              onClick={() => toggleTheme?.()}
               className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-all ${
                 currentTheme === t
                   ? 'border-veteran-500 bg-veteran-50 dark:bg-veteran-900/20'

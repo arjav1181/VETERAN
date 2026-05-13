@@ -1,4 +1,7 @@
-import { apiGet, apiPost, apiDelete, apiPatch } from '../client';
+import { api } from '../client';
+const apiGet = api.get.bind(api);
+const apiPost = api.post.bind(api);
+const apiDelete = api.delete.bind(api);
 import type { Codespace, CodespaceMachine } from '@/types';
 
 export const codespaceApi = {

@@ -1,56 +1,113 @@
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowLeft } from 'lucide-react';
 import { IssueDetail } from '@/components/issues/IssueDetail';
 import { IssueTimeline } from '@/components/issues/IssueTimeline';
 import { CommentBox } from '@/components/issues/CommentBox';
-import type { Issue, IssueLabel, IssueMilestone, IssueComment, IssueEvent } from '@/types';
+import { useIssue, useIssueComments, useCreateComment, useIssueLabels } from '@hooks/useIssues';
+import { VeteranSkeleton } from '@ui/VeteranSkeleton';
+import { VeteranEmptyState } from '@ui/VeteranEmptyState';
 
-const MOCK_ISSUE: Issue = {
-  id: 'issue-1',
-  repositoryId: '1',
-  number: 101,
-  title: 'Fix login redirect loop on authentication failure',
-  body: '## Description\n\nWhen authentication fails, the system enters a redirect loop between the login page and the callback URL.\n\n## Steps to reproduce\n\n1. Go to the login page\n2. Enter invalid credentials\n3. Observe the redirect loop\n\n## Expected behavior\n\nUser should see an error message on the login page.\n\n## Environment\n\n- Browser: Chrome 120\n- OS: macOS 14.2',
-  bodyHtml: null,
-  state: 'open',
-  isLocked: false,
-  lockedReason: null,
-  isPinned: true,
-  authorId: 'user-1',
-  authorUsername: 'jane-dev',
-  authorAvatar: null,
-  assigneeIds: ['user-2'],
-  labelIds: ['l1', 'l2'],
-  milestoneId: 'm1',
-  commentCount: 5,
-  reactionCount: 3,
-  closeById: null,
-  closeByUsername: null,
-  closedAt: null,
-  createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-  updatedAt: new Date(Date.now() - 3600000).toISOString(),
-};
+function mapIssue(apiIssue: any): any {
+  return {
+    id: apiIssue.id,
+    repositoryId: apiIssue.repo_id || apiIssue.repositoryId || '',
+    number: apiIssue.number,
+    title: apiIssue.title,
+    body: apiIssue.body || '',
+    bodyHtml: apiIssue.bodyHtml || apiIssue.body_html || null,
+    state: apiIssue.state,
+    isLocked: apiIssue.locked || apiIssue.isLocked || false,
+    lockedReason: apiIssue.lockedReason || apiIssue.locked_reason || null,
+    isPinned: apiIssue.isPinned || apiIssue.pinned || false,
+    authorId: apiIssue.author?.id || apiIssue.authorId || '',
+    authorUsername: apiIssue.author?.username || apiIssue.authorUsername || '',
+    authorAvatar: apiIssue.author?.avatar_url || apiIssue.authorAvatar || null,
+    assigneeIds: (apiIssue.assignees || []).map((a: any) => a.id || a),
+    labelIds: (apiIssue.labels || []).map((l: any) => l.id || l),
+    milestoneId: apiIssue.milestone?.id || apiIssue.milestoneId || null,
+    commentCount: apiIssue.comments_count ?? apiIssue.commentCount ?? 0,
+    reactionCount: apiIssue.reactionCount || 0,
+    closeById: apiIssue.closeById || apiIssue.close_by_id || null,
+    closeByUsername: apiIssue.closeByUsername || apiIssue.close_by_username || null,
+    closedAt: apiIssue.closed_at || apiIssue.closedAt || null,
+    createdAt: apiIssue.created_at || apiIssue.createdAt || '',
+    updatedAt: apiIssue.updated_at || apiIssue.updatedAt || '',
+  };
+}
 
-const MOCK_LABELS: IssueLabel[] = [
-  { id: 'l1', repositoryId: '1', name: 'bug', color: '#F85149', description: '', isDefault: true, issueCount: 0, createdAt: '', updatedAt: '' },
-  { id: 'l2', repositoryId: '1', name: 'enhancement', color: '#3FB950', description: '', isDefault: true, issueCount: 0, createdAt: '', updatedAt: '' },
-];
-
-const MOCK_COMMENTS: IssueComment[] = [
-  { id: 'c1', issueId: '1', authorId: 'u2', authorUsername: 'john-doe', authorAvatar: null, authorIsCollaborator: true, body: 'I can reproduce this. The issue seems to be in the OAuth callback handler.', bodyHtml: null, isEdited: false, isDeleted: false, isMinimized: false, minimizedReason: null, reactionCount: 2, replyToId: null, editHistory: [], createdAt: new Date(Date.now() - 2 * 86400000).toISOString(), updatedAt: new Date(Date.now() - 2 * 86400000).toISOString() },
-  { id: 'c2', issueId: '1', authorId: 'u3', authorUsername: 'alice', authorAvatar: null, authorIsCollaborator: false, body: 'Looking at the stack trace, it appears the session token is not being cleared on failure.', bodyHtml: null, isEdited: false, isDeleted: false, isMinimized: false, minimizedReason: null, reactionCount: 1, replyToId: null, editHistory: [], createdAt: new Date(Date.now() - 86400000).toISOString(), updatedAt: new Date(Date.now() - 86400000).toISOString() },
-  { id: 'c3', issueId: '1', authorId: 'u1', authorUsername: 'jane-dev', authorAvatar: null, authorIsCollaborator: true, body: 'Fixed in PR #142 by resetting the session state before redirect.', bodyHtml: null, isEdited: false, isDeleted: false, isMinimized: false, minimizedReason: null, reactionCount: 3, replyToId: null, editHistory: [], createdAt: new Date(Date.now() - 3600000).toISOString(), updatedAt: new Date(Date.now() - 3600000).toISOString() },
-];
-
-const MOCK_EVENTS: IssueEvent[] = [
-  { id: 'e1', issueId: '1', eventType: 'labeled', actorId: 'u1', actorUsername: 'jane-dev', actorAvatar: null, payload: { label: 'bug' }, createdAt: new Date(Date.now() - 3 * 86400000).toISOString() },
-  { id: 'e2', issueId: '1', eventType: 'assigned', actorId: 'u1', actorUsername: 'jane-dev', actorAvatar: null, payload: { assignee: 'john-doe' }, createdAt: new Date(Date.now() - 3 * 86400000).toISOString() },
-  { id: 'e3', issueId: '1', eventType: 'milestoned', actorId: 'u1', actorUsername: 'jane-dev', actorAvatar: null, payload: { milestone: 'v1.0 Release' }, createdAt: new Date(Date.now() - 2 * 86400000).toISOString() },
-];
+function mapComment(apiComment: any): any {
+  return {
+    id: apiComment.id,
+    issueId: apiComment.issue_id || apiComment.issueId || '',
+    authorId: apiComment.author?.id || apiComment.authorId || '',
+    authorUsername: apiComment.author?.username || apiComment.authorUsername || '',
+    authorAvatar: apiComment.author?.avatar_url || apiComment.authorAvatar || null,
+    authorIsCollaborator: apiComment.authorIsCollaborator || apiComment.author_is_collaborator || false,
+    body: apiComment.body || '',
+    bodyHtml: apiComment.bodyHtml || apiComment.body_html || null,
+    isEdited: apiComment.isEdited || apiComment.edited || false,
+    isDeleted: apiComment.isDeleted || false,
+    isMinimized: apiComment.isMinimized || false,
+    minimizedReason: apiComment.minimizedReason || null,
+    reactionCount: apiComment.reactionCount || 0,
+    replyToId: apiComment.replyToId || apiComment.reply_to_id || null,
+    editHistory: apiComment.editHistory || apiComment.edit_history || [],
+    createdAt: apiComment.created_at || apiComment.createdAt || '',
+    updatedAt: apiComment.updated_at || apiComment.updatedAt || '',
+  };
+}
 
 export function RepoIssueDetail() {
   const { owner, name, number } = useParams<{ owner: string; name: string; number: string }>();
   const navigate = useNavigate();
+  const issueNumber = Number(number);
+
+  const { data: issue, isLoading: issueLoading, error: issueError } = useIssue(owner!, name!, issueNumber);
+  const { data: comments, isLoading: commentsLoading } = useIssueComments(owner!, name!, issueNumber);
+  const { data: labels } = useIssueLabels(owner!, name!);
+  const createComment = useCreateComment(owner!, name!, issueNumber);
+
+  if (issueLoading) {
+    return (
+      <div className="min-h-screen bg-primary-dark">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="h-5 w-32 bg-surface rounded animate-pulse mb-4" />
+          <VeteranSkeleton variant="card" />
+        </div>
+      </div>
+    );
+  }
+
+  if (issueError || !issue) {
+    return (
+      <div className="min-h-screen bg-primary-dark">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <button
+            onClick={() => navigate(`/${owner}/${name}/issues`)}
+            className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary mb-4 transition-colors"
+          >
+            <ArrowLeft size={16} /> Back to issues
+          </button>
+          <VeteranEmptyState icon="alert" title="Issue not found" description="The requested issue could not be found." />
+        </div>
+      </div>
+    );
+  }
+
+  const mappedIssue = mapIssue(issue);
+  const mappedLabels = (labels ?? []).map((l: any) => ({
+    id: l.id,
+    repositoryId: l.repositoryId || l.repo_id || '',
+    name: l.name,
+    description: l.description || null,
+    color: l.color,
+    isDefault: l.isDefault || l.default || false,
+    issueCount: l.issueCount || l.issue_count || 0,
+    createdAt: l.createdAt || l.created_at || '',
+    updatedAt: l.updatedAt || l.updated_at || '',
+  }));
+  const mappedComments = (comments ?? []).map(mapComment);
 
   return (
     <div className="min-h-screen bg-primary-dark">
@@ -62,14 +119,18 @@ export function RepoIssueDetail() {
           <ArrowLeft size={16} /> Back to issues
         </button>
 
-        <IssueDetail issue={MOCK_ISSUE} labels={MOCK_LABELS} />
+        <IssueDetail issue={mappedIssue} labels={mappedLabels} />
 
         <div className="mt-6">
-          <IssueTimeline comments={MOCK_COMMENTS} events={MOCK_EVENTS} />
+          <IssueTimeline
+            comments={mappedComments}
+            events={[]}
+            loading={commentsLoading}
+          />
         </div>
 
         <div className="mt-6">
-          <CommentBox onSubmit={(body) => console.log('Comment:', body)} />
+          <CommentBox onSubmit={(body) => createComment.mutate(body)} />
         </div>
       </div>
     </div>

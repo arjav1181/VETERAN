@@ -25,6 +25,8 @@ import {
   Users,
   Code2,
 } from 'lucide-react';
+import { cn } from '@lib/utils';
+import type { Repo } from '@lib/api/endpoints/repos';
 
 const quickActions = [
   { label: 'New repository', icon: Plus, color: 'text-veteran-500 bg-veteran-100 dark:bg-veteran-900/30', onClick: () => {} },
@@ -38,6 +40,10 @@ export function Dashboard() {
   const [tab, setTab] = useState('overview');
 
   const { data: repos, isLoading: reposLoading } = useRepos({ type: 'owner', per_page: 10 });
+
+  const totalStars = repos?.reduce((sum, r) => sum + (r.stars_count ?? r.starCount ?? 0), 0) ?? 0;
+  const totalPRs = repos?.reduce((sum, r) => sum + (r.openPullCount ?? 0), 0) ?? 0;
+  const totalIssues = repos?.reduce((sum, r) => sum + (r.openIssuesCount ?? r.openIssueCount ?? 0), 0) ?? 0;
 
   const tabs: TabItem[] = [
     {
@@ -68,7 +74,6 @@ export function Dashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Welcome header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[rgb(var(--veteran-fg))]">
@@ -86,13 +91,12 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Quick stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Repositories', value: repos?.length || 0, icon: GitFork, color: 'text-veteran-500' },
-          { label: 'Pull Requests', value: '12', icon: GitPullRequest, color: 'text-green-500' },
-          { label: 'Open Issues', value: '8', icon: Bug, color: 'text-red-500' },
-          { label: 'Stars', value: '142', icon: Star, color: 'text-brand-500' },
+          { label: 'Repositories', value: repos?.length ?? 0, icon: GitFork, color: 'text-veteran-500' },
+          { label: 'Pull Requests', value: String(totalPRs), icon: GitPullRequest, color: 'text-green-500' },
+          { label: 'Open Issues', value: String(totalIssues), icon: Bug, color: 'text-red-500' },
+          { label: 'Stars', value: String(totalStars), icon: Star, color: 'text-brand-500' },
         ].map((stat) => {
           const Icon = stat.icon;
           return (
@@ -114,19 +118,14 @@ export function Dashboard() {
         })}
       </div>
 
-      {/* Tabs */}
       <VeteranTabs tabs={tabs} activeTab={tab} onChange={setTab} variant="underline" />
     </div>
   );
 }
 
-import { cn } from '@lib/utils';
-import type { Repo } from '@lib/api/endpoints/repos';
-
 function OverviewTab({ repos, loading }: { repos?: Repo[]; loading: boolean }) {
   return (
     <div className="grid lg:grid-cols-3 gap-6">
-      {/* Recent repositories */}
       <div className="lg:col-span-2 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-[rgb(var(--veteran-fg))]">Recent Repositories</h2>
@@ -142,14 +141,14 @@ function OverviewTab({ repos, loading }: { repos?: Repo[]; loading: boolean }) {
             {repos.map((repo) => (
               <Link
                 key={repo.id}
-                to={`/${repo.full_name}`}
+                to={`/${repo.full_name || repo.fullName}`}
                 className="card-hover p-4 flex items-center justify-between"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <GitFork className="w-5 h-5 text-surface-400 flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-[rgb(var(--veteran-fg))] truncate">
-                      {repo.full_name}
+                      {repo.full_name || repo.fullName}
                     </p>
                     <p className="text-xs text-surface-500 mt-0.5 truncate">
                       {repo.description || 'No description'}
@@ -165,9 +164,9 @@ function OverviewTab({ repos, loading }: { repos?: Repo[]; loading: boolean }) {
                   )}
                   <span className="flex items-center gap-1">
                     <Star className="w-3 h-3" />
-                    {repo.stars_count}
+                    {repo.stars_count ?? repo.starCount ?? 0}
                   </span>
-                  <span>{relativeTime(repo.pushed_at)}</span>
+                  <span>{relativeTime(repo.pushed_at || repo.pushedAt)}</span>
                 </div>
               </Link>
             ))}
@@ -182,9 +181,7 @@ function OverviewTab({ repos, loading }: { repos?: Repo[]; loading: boolean }) {
         )}
       </div>
 
-      {/* Side panel */}
       <div className="space-y-6">
-        {/* Quick actions */}
         <div className="card p-4">
           <h3 className="text-sm font-semibold text-[rgb(var(--veteran-fg))] mb-3">Quick Actions</h3>
           <div className="space-y-1">
@@ -207,36 +204,19 @@ function OverviewTab({ repos, loading }: { repos?: Repo[]; loading: boolean }) {
           </div>
         </div>
 
-        {/* Recent activity */}
         <div className="card p-4">
           <h3 className="text-sm font-semibold text-[rgb(var(--veteran-fg))] mb-3">Recent Activity</h3>
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <VeteranAvatar size="xs" name="You" />
-              <div className="min-w-0">
-                <p className="text-xs text-[rgb(var(--veteran-fg))]">
-                  <span className="font-medium">You</span> pushed to <span className="font-medium">main</span>
-                </p>
-                <p className="text-2xs text-surface-400 mt-0.5">5 minutes ago</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <VeteranAvatar size="xs" name="You" />
-              <div className="min-w-0">
-                <p className="text-xs text-[rgb(var(--veteran-fg))]">
-                  <span className="font-medium">You</span> created <span className="font-medium">README.md</span>
-                </p>
-                <p className="text-2xs text-surface-400 mt-0.5">1 hour ago</p>
-              </div>
-            </div>
-          </div>
+          <VeteranEmptyState
+            icon="inbox"
+            title="No recent activity"
+            description="Your recent activity will appear here."
+          />
         </div>
 
-        {/* Contribution */}
         <div className="card p-4">
           <h3 className="text-sm font-semibold text-[rgb(var(--veteran-fg))] mb-3">Contributions</h3>
           <div className="flex items-center gap-4">
-            <div className="text-3xl font-bold text-veteran-500">23</div>
+            <div className="text-3xl font-bold text-veteran-500">0</div>
             <div className="text-xs text-surface-500">
               contributions
               <br />
@@ -267,8 +247,8 @@ function ReposTab({ repos, loading }: { repos?: Repo[]; loading: boolean }) {
             <div key={repo.id} className="card-hover p-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <Link to={`/${repo.full_name}`} className="text-base font-semibold text-veteran-600 dark:text-veteran-400 hover:underline">
-                    {repo.full_name}
+                  <Link to={`/${repo.full_name || repo.fullName}`} className="text-base font-semibold text-veteran-600 dark:text-veteran-400 hover:underline">
+                    {repo.full_name || repo.fullName}
                   </Link>
                   {repo.description && (
                     <p className="text-sm text-surface-500 mt-1">{repo.description}</p>
@@ -282,13 +262,13 @@ function ReposTab({ repos, loading }: { repos?: Repo[]; loading: boolean }) {
                     )}
                     <span className="flex items-center gap-1">
                       <Star className="w-3 h-3" />
-                      {repo.stars_count}
+                      {repo.stars_count ?? repo.starCount ?? 0}
                     </span>
                     <span className="flex items-center gap-1">
                       <GitFork className="w-3 h-3" />
-                      {repo.forks_count}
+                      {repo.forks_count ?? repo.forkCount ?? 0}
                     </span>
-                    <span>Updated {relativeTime(repo.updated_at)}</span>
+                    <span>Updated {relativeTime(repo.updated_at || repo.updatedAt)}</span>
                   </div>
                 </div>
                 <VeteranBadge variant={repo.private ? 'default' : 'success'} size="sm">

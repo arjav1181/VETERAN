@@ -1,27 +1,30 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { ClipboardList, Search, ArrowLeft, Filter } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/utils';
-
-const MOCK_ENTRIES = Array.from({ length: 30 }).map((_, i) => ({
-  id: `log-${i}`,
-  action: ['user.login', 'repo.create', 'user.delete', 'repo.archive', 'org.update', 'user.suspend', 'repo.transfer'][i % 7],
-  actor: ['admin-1', 'admin-2'][i % 2],
-  target: [`user-${i % 10}`, `repo-${i % 15}`][i % 2],
-  details: `Performed ${['login', 'creation', 'deletion', 'archival', 'update', 'suspension', 'transfer'][i % 7]}`,
-  ip: `192.168.1.${(i % 254) + 1}`,
-  createdAt: new Date(Date.now() - i * 3600000).toISOString(),
-}));
+import { adminApi } from '@lib/api/endpoints/admin';
+import { VeteranSkeleton } from '@ui/VeteranSkeleton';
+import { VeteranEmptyState } from '@ui/VeteranEmptyState';
 
 export function AdminAuditLog() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
 
-  const filtered = MOCK_ENTRIES.filter(e =>
-    e.action.toLowerCase().includes(search.toLowerCase()) ||
-    e.actor.toLowerCase().includes(search.toLowerCase()) ||
-    e.target.toLowerCase().includes(search.toLowerCase())
-  );
+  const { data: entries, isLoading, error } = useQuery({
+    queryKey: ['admin', 'audit-logs', search],
+    queryFn: () => adminApi.getAuditLogs({ per_page: 100 }),
+  });
+
+  const logEntries = Array.isArray(entries) ? entries : [];
+
+  const filtered = search
+    ? logEntries.filter(e =>
+        e.action.toLowerCase().includes(search.toLowerCase()) ||
+        e.actor.username.toLowerCase().includes(search.toLowerCase()) ||
+        e.target_type.toLowerCase().includes(search.toLowerCase())
+      )
+    : logEntries;
 
   return (
     <div className="min-h-screen bg-primary-dark">
@@ -48,32 +51,40 @@ export function AdminAuditLog() {
           </div>
         </div>
 
-        <div className="border border-border rounded-lg bg-primary-dark overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border bg-surface">
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider">Action</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider hidden sm:table-cell">Actor</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider hidden md:table-cell">Target</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider hidden lg:table-cell">Details</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider">Time</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/50">
-              {filtered.map(entry => (
-                <tr key={entry.id} className="hover:bg-surface/20 transition-colors">
-                  <td className="px-4 py-3">
-                    <code className="text-sm font-mono text-text-primary">{entry.action}</code>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-text-secondary hidden sm:table-cell">{entry.actor}</td>
-                  <td className="px-4 py-3 text-sm text-text-muted hidden md:table-cell">{entry.target}</td>
-                  <td className="px-4 py-3 text-sm text-text-muted hidden lg:table-cell">{entry.details}</td>
-                  <td className="px-4 py-3 text-sm text-text-muted">{formatRelativeTime(entry.createdAt)}</td>
+        {isLoading ? (
+          <div className="space-y-2"><VeteranSkeleton variant="table" /></div>
+        ) : error ? (
+          <VeteranEmptyState icon="alert" title="Failed to load audit log" description="Could not fetch audit log entries. Please try again." />
+        ) : filtered.length === 0 ? (
+          <VeteranEmptyState icon="search" title="No entries found" description={search ? 'Try a different search term.' : 'No audit log entries yet.'} />
+        ) : (
+          <div className="border border-border rounded-lg bg-primary-dark overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-surface">
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider">Action</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider hidden sm:table-cell">Actor</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider hidden md:table-cell">Target</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider hidden lg:table-cell">Details</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider">Time</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {filtered.map(entry => (
+                  <tr key={entry.id} className="hover:bg-surface/20 transition-colors">
+                    <td className="px-4 py-3">
+                      <code className="text-sm font-mono text-text-primary">{entry.action}</code>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-text-secondary hidden sm:table-cell">{entry.actor.username}</td>
+                    <td className="px-4 py-3 text-sm text-text-muted hidden md:table-cell">{entry.target_type}#{entry.target_id?.slice(0, 8)}</td>
+                    <td className="px-4 py-3 text-sm text-text-muted hidden lg:table-cell">{JSON.stringify(entry.metadata)}</td>
+                    <td className="px-4 py-3 text-sm text-text-muted">{formatRelativeTime(entry.created_at)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

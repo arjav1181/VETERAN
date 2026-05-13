@@ -1,25 +1,28 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Building2, Search, Shield, MoreHorizontal, ArrowLeft } from 'lucide-react';
-
-const MOCK_ORGS = Array.from({ length: 10 }).map((_, i) => ({
-  id: `org-${i}`,
-  name: `organization-${i + 1}`,
-  displayName: `Building2 ${i + 1}`,
-  memberCount: Math.floor(Math.random() * 50 + 5),
-  repoCount: Math.floor(Math.random() * 30 + 1),
-  isVerified: i < 3,
-  createdAt: new Date(Date.now() - i * 60 * 86400000).toISOString(),
-}));
+import { adminApi } from '@lib/api/endpoints/admin';
+import { VeteranSkeleton } from '@ui/VeteranSkeleton';
+import { VeteranEmptyState } from '@ui/VeteranEmptyState';
 
 export function AdminOrgs() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
 
-  const filtered = MOCK_ORGS.filter(o =>
-    o.name.toLowerCase().includes(search.toLowerCase()) ||
-    o.displayName.toLowerCase().includes(search.toLowerCase())
-  );
+  const { data: orgs, isLoading, error } = useQuery({
+    queryKey: ['admin', 'orgs'],
+    queryFn: () => adminApi.listOrgs({ per_page: 100 }),
+  });
+
+  const orgList = Array.isArray(orgs) ? orgs : [];
+
+  const filtered = search
+    ? orgList.filter((o: any) =>
+        (o.name || '').toLowerCase().includes(search.toLowerCase()) ||
+        (o.slug || '').toLowerCase().includes(search.toLowerCase())
+      )
+    : orgList;
 
   return (
     <div className="min-h-screen bg-primary-dark">
@@ -32,7 +35,7 @@ export function AdminOrgs() {
           <div className="flex items-center gap-3">
             <Building2 size={24} className="text-accent" />
             <h1 className="text-xl font-bold text-text-primary">Organizations</h1>
-            <span className="text-sm text-text-muted">{MOCK_ORGS.length} total</span>
+            <span className="text-sm text-text-muted">{orgList.length} total</span>
           </div>
         </div>
 
@@ -44,45 +47,53 @@ export function AdminOrgs() {
           </div>
         </div>
 
-        <div className="border border-border rounded-lg bg-primary-dark overflow-hidden">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border bg-surface">
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider">Building2</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider hidden sm:table-cell">Members</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider hidden sm:table-cell">Repos</th>
-                <th className="text-left px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider hidden md:table-cell">Created</th>
-                <th className="w-10" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/50">
-              {filtered.map(org => (
-                <tr key={org.id} className="hover:bg-surface/20 transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center shrink-0">
-                        <Building2 size={16} className="text-accent" />
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-text-primary">{org.displayName}</span>
-                        <span className="text-xs text-text-muted block">@{org.name}</span>
-                      </div>
-                      {org.isVerified && <Shield size={14} className="text-info shrink-0" />}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-text-secondary hidden sm:table-cell">{org.memberCount}</td>
-                  <td className="px-4 py-3 text-sm text-text-secondary hidden sm:table-cell">{org.repoCount}</td>
-                  <td className="px-4 py-3 text-sm text-text-muted hidden md:table-cell">{new Date(org.createdAt).toLocaleDateString()}</td>
-                  <td className="px-4 py-3">
-                    <button className="p-1 text-text-muted hover:text-text-primary rounded transition-colors">
-                      <MoreHorizontal size={16} />
-                    </button>
-                  </td>
+        {isLoading ? (
+          <div className="space-y-2"><VeteranSkeleton variant="table" /></div>
+        ) : error ? (
+          <VeteranEmptyState icon="alert" title="Failed to load organizations" description="Could not fetch organization data. Please try again." />
+        ) : filtered.length === 0 ? (
+          <VeteranEmptyState icon="search" title="No organizations found" description={search ? 'Try a different search term.' : 'No organizations have been created yet.'} />
+        ) : (
+          <div className="border border-border rounded-lg bg-primary-dark overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-surface">
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider">Organization</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider hidden sm:table-cell">Members</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider hidden sm:table-cell">Repos</th>
+                  <th className="text-left px-4 py-2.5 text-xs font-medium text-text-muted uppercase tracking-wider hidden md:table-cell">Created</th>
+                  <th className="w-10" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {filtered.map((org: any) => (
+                  <tr key={org.id} className="hover:bg-surface/20 transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center shrink-0">
+                          <Building2 size={16} className="text-accent" />
+                        </div>
+                        <div>
+                          <span className="text-sm font-medium text-text-primary">{org.name}</span>
+                          <span className="text-xs text-text-muted block">@{org.slug}</span>
+                        </div>
+                        {org.verified && <Shield size={14} className="text-info shrink-0" />}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-text-secondary hidden sm:table-cell">{org.public_members ?? org.memberCount ?? 0}</td>
+                    <td className="px-4 py-3 text-sm text-text-secondary hidden sm:table-cell">{org.repos_count ?? org.repoCount ?? 0}</td>
+                    <td className="px-4 py-3 text-sm text-text-muted hidden md:table-cell">{new Date(org.created_at || org.createdAt).toLocaleDateString()}</td>
+                    <td className="px-4 py-3">
+                      <button className="p-1 text-text-muted hover:text-text-primary rounded transition-colors">
+                        <MoreHorizontal size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

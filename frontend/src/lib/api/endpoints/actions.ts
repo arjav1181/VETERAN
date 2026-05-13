@@ -1,4 +1,6 @@
-import { apiGet, apiPost } from '../client';
+import { api } from '../client';
+const apiGet = api.get.bind(api);
+const apiPost = api.post.bind(api);
 import type { CIPipeline, CIJob, CIJobLog, CIWorkflow, CIArtifact } from '@/types';
 
 export interface PipelineListParams {
