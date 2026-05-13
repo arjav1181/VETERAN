@@ -44,13 +44,20 @@ export function RepoCode() {
 
   if (repoError || !repo) {
     return (
-      <div className="min-h-screen bg-primary-dark">
-        <VeteranEmptyState
-          icon="file"
-          title="Repository not found"
-          description={repoError ? 'An error occurred loading this repository.' : 'This repository does not exist or you may not have access.'}
-          action={{ label: 'Go Home', href: '/' }}
-        />
+      <div className="min-h-screen bg-primary-dark flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="text-6xl mb-4">📂</div>
+          <h2 className="text-xl font-bold text-text-primary mb-2">Repository not found</h2>
+          <p className="text-text-secondary mb-4">
+            {repoError instanceof Error ? repoError.message : 
+             repoError ? String(repoError) : 
+             `The repository ${owner}/${name} does not exist or you may not have access.`}
+          </p>
+          <p className="text-text-muted text-xs mb-4">
+            API: GET /api/v1/repos/{owner}/{name}
+          </p>
+          <a href="/" className="text-accent hover:underline text-sm">Go to Dashboard</a>
+        </div>
       </div>
     );
   }

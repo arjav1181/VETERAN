@@ -11,7 +11,7 @@ export type Repo = {
   isArchived: boolean;
   defaultBranch: string;
   language: string | null;
-  topics: string[];
+  topics: string[] | string;
   starsCount: number;
   forksCount: number;
   openIssuesCount: number;

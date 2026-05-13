@@ -181,7 +181,8 @@ function TopicsSection({ topics, loading }: { topics: any[]; loading: boolean })
     );
   }
 
-  if (topics.length === 0) {
+  const topicList = Array.isArray(topics) ? topics : [];
+  if (topicList.length === 0) {
     return (
       <VeteranEmptyState icon="search" title="No topics found" description="Popular topics will appear here." />
     );
@@ -191,7 +192,7 @@ function TopicsSection({ topics, loading }: { topics: any[]; loading: boolean })
     <div>
       <h2 className="text-lg font-semibold text-[rgb(var(--veteran-fg))] mb-4">Popular Topics</h2>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {topics.map((topic: any) => (
+        {topicList.map((topic: any) => (
           <Link
             key={topic.name}
             to={`/topics/${topic.name}`}
