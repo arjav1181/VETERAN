@@ -10,18 +10,23 @@ import { VeteranSkeleton } from '@/components/ui/VeteranSkeleton';
 import { VeteranEmptyState } from '@/components/ui/VeteranEmptyState';
 
 export function RepoCode() {
-  const { owner, name } = useParams<{ owner: string; name: string }>();
+  const params = useParams<{ owner: string; name: string }>();
+  const pathParts = window.location.pathname.split('/').filter(Boolean);
+  const owner = params.owner || pathParts[0] || '';
+  const name = params.name || pathParts[1] || '';
+
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [currentBranch, setCurrentBranch] = useState('main');
 
   if (!owner || !name) {
     return (
       <div className="min-h-screen bg-primary-dark flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-md">
           <div className="text-6xl mb-4">📂</div>
           <h2 className="text-xl font-bold text-text-primary mb-2">Invalid URL</h2>
           <p className="text-text-secondary mb-4">The URL must include both owner and repository name.</p>
-          <p className="text-text-muted text-xs mb-4">Expected: /owner/repo-name</p>
+          <p className="text-text-muted text-xs break-all mb-2">URL: {window.location.pathname}</p>
+          <p className="text-text-muted text-xs mb-4">Params: owner={params.owner || '(none)'}, name={params.name || '(none)'}</p>
           <a href="/" className="text-accent hover:underline text-sm">Go to Dashboard</a>
         </div>
       </div>
@@ -144,3 +149,4 @@ export function RepoCode() {
     </div>
   );
 }
+console.log('[RepoCode] Mounted with params:', { owner: window.__owner, name: window.__name });
