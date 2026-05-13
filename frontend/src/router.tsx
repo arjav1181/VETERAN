@@ -21,8 +21,10 @@ import { RepoReleases } from '@pages/RepoReleases';
 import { RepoReleaseDetail } from '@pages/RepoReleaseDetail';
 import { RepoIssues } from '@pages/RepoIssues';
 import { RepoIssueDetail } from '@pages/RepoIssueDetail';
+import { CreateIssue } from '@pages/CreateIssue';
 import { RepoPulls } from '@pages/RepoPulls';
 import { RepoPullDetail } from '@pages/RepoPullDetail';
+import { CreatePR } from '@pages/CreatePR';
 import { RepoActions } from '@pages/RepoActions';
 import { RepoActionDetail } from '@pages/RepoActionDetail';
 import { RepoProjects } from '@pages/RepoProjects';
@@ -150,7 +152,7 @@ export const router = createBrowserRouter([
       },
       {
         path: ':owner/:repo/issues/new',
-        element: <RepoIssueDetail />,
+        element: <CreateIssue />,
       },
       {
         path: ':owner/:repo/issues/:number',
@@ -162,7 +164,7 @@ export const router = createBrowserRouter([
       },
       {
         path: ':owner/:repo/pulls/new',
-        element: <RepoPullDetail />,
+        element: <CreatePR />,
       },
       {
         path: ':owner/:repo/pull/:number',

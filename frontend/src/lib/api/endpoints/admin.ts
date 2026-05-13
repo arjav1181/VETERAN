@@ -1,15 +1,15 @@
 import { api } from '../client';
 
 export type SystemStats = {
-  total_users: number;
-  total_repos: number;
-  total_orgs: number;
-  total_issues: number;
-  total_pulls: number;
-  active_users_24h: number;
-  active_users_7d: number;
-  storage_used: number;
-  api_requests_24h: number;
+  totalUsers: number;
+  totalRepos: number;
+  totalOrgs: number;
+  totalIssues: number;
+  totalPulls: number;
+  activeUsers24h: number;
+  activeUsers7d: number;
+  storageUsed: number;
+  apiRequests24h: number;
 };
 
 export type UserAdmin = {
@@ -20,19 +20,19 @@ export type UserAdmin = {
   role: 'user' | 'admin' | 'super_admin';
   banned: boolean;
   confirmed: boolean;
-  created_at: string;
-  last_sign_in: string | null;
+  createdAt: string;
+  lastSignIn: string | null;
 };
 
 export type AuditLog = {
   id: string;
   action: string;
   actor: { id: string; username: string };
-  target_type: string;
-  target_id: string;
+  targetType: string;
+  targetId: string;
   metadata: Record<string, unknown>;
-  ip_address: string;
-  created_at: string;
+  ipAddress: string;
+  createdAt: string;
 };
 
 export const adminApi = {

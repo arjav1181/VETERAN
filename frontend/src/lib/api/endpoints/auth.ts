@@ -61,7 +61,7 @@ export const authApi = {
 
   updatePassword: (currentPassword: string, newPassword: string) =>
     api.put<{ message: string }>('/auth/password', {
-      current_password: currentPassword,
-      new_password: newPassword,
+      currentPassword,
+      newPassword,
     }),
 };

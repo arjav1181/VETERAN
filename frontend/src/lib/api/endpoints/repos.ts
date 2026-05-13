@@ -45,8 +45,8 @@ export type CreateRepoRequest = {
 export type UpdateRepoRequest = {
   name?: string;
   description?: string;
-  private?: boolean;
-  default_branch?: string;
+  isPrivate?: boolean;
+  defaultBranch?: string;
   topics?: string[];
 };
 
