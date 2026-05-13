@@ -51,32 +51,14 @@ import { AdminMonitoring } from '@pages/AdminMonitoring';
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Landing />,
-  },
-  {
-    path: '/login',
-    element: <Login />,
-  },
-  {
-    path: '/signup',
-    element: <Signup />,
-  },
-  {
-    path: '/forgot-password',
-    element: <ForgotPassword />,
-  },
-  {
-    path: '/reset-password/:token',
-    element: <ResetPassword />,
-  },
-  {
-    path: '/verify-email/:token',
-    element: <VerifyEmail />,
-  },
-  {
-    path: '/',
     element: <AppShell />,
     children: [
+      { index: true, element: <Landing /> },
+      { path: 'login', element: <Login /> },
+      { path: 'signup', element: <Signup /> },
+      { path: 'forgot-password', element: <ForgotPassword /> },
+      { path: 'reset-password/:token', element: <ResetPassword /> },
+      { path: 'verify-email/:token', element: <VerifyEmail /> },
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'explore', element: <Explore /> },
       { path: 'explore/topics/:topic', element: <Explore /> },

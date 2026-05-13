@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
@@ -13,9 +13,15 @@ interface AppShellProps {
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const location = useLocation();
+  const isLanding = location.pathname === '/';
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  if (isLanding) {
+    return <>{children || <Outlet />}</>;
+  }
 
   return (
     <div className="h-screen flex flex-col bg-[rgb(var(--veteran-bg))]">
