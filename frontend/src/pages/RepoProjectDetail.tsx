@@ -9,9 +9,10 @@ import { RoadmapView } from '@/components/projects/RoadmapView';
 import { api } from '@lib/api/client';
 import { VeteranSkeleton } from '@ui/VeteranSkeleton';
 import { VeteranEmptyState } from '@ui/VeteranEmptyState';
+import { getRepoParams } from '@lib/route-utils';
 
 export function RepoProjectDetail() {
-  const p = useParams<{ owner: string; name?: string; repo?: string; number: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || ""; const number = p.number;
+  const { owner, repo: name } = getRepoParams(); const number = p.number;
   const navigate = useNavigate();
   const [view, setView] = useState<'board' | 'table' | 'roadmap'>('board');
 

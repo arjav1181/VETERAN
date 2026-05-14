@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { api } from '@lib/api/client';
 import { VeteranSkeleton } from '@ui/VeteranSkeleton';
 import { VeteranEmptyState } from '@ui/VeteranEmptyState';
+import { getRepoParams } from '@lib/route-utils';
 
 const SEVERITY_COLORS: Record<string, string> = {
   critical: 'bg-danger/20 text-danger border-danger/30',
@@ -14,7 +15,7 @@ const SEVERITY_COLORS: Record<string, string> = {
 };
 
 export function RepoSecurity() {
-  const p = useParams<{ owner: string; name?: string; repo?: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || "";
+  const { owner, repo: name } = getRepoParams();
 
   const { data: alerts, isLoading, error } = useQuery({
     queryKey: ['security-alerts', owner, name],

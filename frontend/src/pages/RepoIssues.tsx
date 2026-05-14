@@ -5,6 +5,7 @@ import { IssueList } from '@/components/issues/IssueList';
 import { useIssues, useIssueLabels, useIssueMilestones } from '@hooks/useIssues';
 import { VeteranSkeleton } from '@ui/VeteranSkeleton';
 import { VeteranEmptyState } from '@ui/VeteranEmptyState';
+import { getRepoParams } from '@lib/route-utils';
 
 function mapIssue(apiIssue: any): any {
   return {
@@ -35,7 +36,7 @@ function mapIssue(apiIssue: any): any {
 }
 
 export function RepoIssues() {
-  const p = useParams<{ owner: string; name?: string; repo?: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || "";
+  const { owner, repo: name } = getRepoParams();
   const navigate = useNavigate();
   const [state, setState] = useState<'open' | 'closed'>('open');
 

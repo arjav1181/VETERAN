@@ -7,9 +7,10 @@ import { cn, formatRelativeTime } from '@/lib/utils';
 import { api } from '@lib/api/client';
 import { VeteranSkeleton } from '@ui/VeteranSkeleton';
 import { VeteranEmptyState } from '@ui/VeteranEmptyState';
+import { getRepoParams } from '@lib/route-utils';
 
 export function RepoDiscussionDetail() {
-  const p = useParams<{ owner: string; name?: string; repo?: string; id: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || ""; const id = p.id;
+  const { owner, repo: name } = getRepoParams(); const id = p.id;
   const navigate = useNavigate();
 
   const { data: discussion, isLoading, error } = useQuery({

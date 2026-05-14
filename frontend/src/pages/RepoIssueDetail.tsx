@@ -7,6 +7,7 @@ import { CommentBox } from '@/components/issues/CommentBox';
 import { useIssue, useIssueComments, useCreateComment, useIssueLabels } from '@hooks/useIssues';
 import { VeteranSkeleton } from '@ui/VeteranSkeleton';
 import { VeteranEmptyState } from '@ui/VeteranEmptyState';
+import { getRepoParams } from '@lib/route-utils';
 
 function mapIssue(apiIssue: any): any {
   return {
@@ -59,7 +60,7 @@ function mapComment(apiComment: any): any {
 }
 
 export function RepoIssueDetail() {
-  const p = useParams<{ owner: string; name?: string; repo?: string; number: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || ""; const number = p.number;
+  const { owner, repo: name } = getRepoParams(); const number = p.number;
   const navigate = useNavigate();
   const issueNumber = Number(number);
 

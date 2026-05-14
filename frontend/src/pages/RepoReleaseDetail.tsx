@@ -6,9 +6,10 @@ import { formatRelativeTime, formatCount } from '@/lib/utils';
 import { repoApi } from '@lib/api/endpoints/repos';
 import { VeteranSkeleton } from '@ui/VeteranSkeleton';
 import { VeteranEmptyState } from '@ui/VeteranEmptyState';
+import { getRepoParams } from '@lib/route-utils';
 
 export function RepoReleaseDetail() {
-  const p = useParams<{ owner: string; name?: string; repo?: string; tag: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || ""; const tag = p.tag;
+  const { owner, repo: name } = getRepoParams(); const tag = p.tag;
   const navigate = useNavigate();
 
   const { data: release, isLoading, error } = useQuery({

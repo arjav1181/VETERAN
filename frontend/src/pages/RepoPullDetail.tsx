@@ -4,6 +4,7 @@ import { PRDetail } from '@/components/pulls/PRDetail';
 import { usePull, usePullCommits, usePullReviews } from '@hooks/usePulls';
 import { VeteranSkeleton } from '@ui/VeteranSkeleton';
 import { VeteranEmptyState } from '@ui/VeteranEmptyState';
+import { getRepoParams } from '@lib/route-utils';
 
 function mapPR(apiPr: any): any {
   return {
@@ -80,7 +81,7 @@ function mapPRCommit(c: any): any {
 }
 
 export function RepoPullDetail() {
-  const p = useParams<{ owner: string; name?: string; repo?: string; number: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || ""; const number = p.number;
+  const { owner, repo: name } = getRepoParams(); const number = p.number;
   const navigate = useNavigate();
   const pullNumber = Number(number);
 

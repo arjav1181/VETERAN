@@ -3,6 +3,7 @@ import { ArrowLeft, GitCommit, Clock, User, CheckCircle, Copy } from 'lucide-rea
 import { cn, formatRelativeTime, formatAbsoluteTime } from '@/lib/utils';
 import { MarkdownRenderer } from '@/components/shared/MarkdownRenderer';
 import { DiffViewer } from '@/components/repo/DiffViewer';
+import { getRepoParams } from '@lib/route-utils';
 
 export function RepoCommitDetail() {
   const { owner, name, sha } = useParams<{ owner: string; name: string; sha: string }>();

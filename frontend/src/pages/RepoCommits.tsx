@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { repoApi } from '@lib/api/endpoints/repos';
 import { VeteranSkeleton } from '@ui/VeteranSkeleton';
 import { VeteranEmptyState } from '@ui/VeteranEmptyState';
+import { getRepoParams } from '@lib/route-utils';
 
 function mapCommit(apiCommit: any): any {
   return {
@@ -43,7 +44,7 @@ function mapCommit(apiCommit: any): any {
 }
 
 export function RepoCommits() {
-  const p = useParams<{ owner: string; name?: string; repo?: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || "";
+  const { owner, repo: name } = getRepoParams();
   const navigate = useNavigate();
 
   const { data: repo, isLoading: repoLoading } = useRepo(owner!, name!);

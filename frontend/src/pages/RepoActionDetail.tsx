@@ -5,9 +5,10 @@ import { RunDetail } from '@/components/actions/RunDetail';
 import { actionsApi } from '@lib/api/endpoints/actions';
 import { VeteranSkeleton } from '@ui/VeteranSkeleton';
 import { VeteranEmptyState } from '@ui/VeteranEmptyState';
+import { getRepoParams } from '@lib/route-utils';
 
 export function RepoActionDetail() {
-  const p = useParams<{ owner: string; name?: string; repo?: string; runId: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || ""; const runId = p.runId;
+  const { owner, repo: name } = getRepoParams(); const runId = p.runId;
   const navigate = useNavigate();
 
   const { data: run, isLoading: runLoading, error } = useQuery({

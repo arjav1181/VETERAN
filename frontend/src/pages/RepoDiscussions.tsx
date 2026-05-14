@@ -6,9 +6,10 @@ import { api } from '@lib/api/client';
 import { VeteranSkeleton } from '@ui/VeteranSkeleton';
 import { VeteranEmptyState } from '@ui/VeteranEmptyState';
 import { useState } from 'react';
+import { getRepoParams } from '@lib/route-utils';
 
 export function RepoDiscussions() {
-  const p = useParams<{ owner: string; name?: string; repo?: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || "";
+  const { owner, repo: name } = getRepoParams();
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('');
 

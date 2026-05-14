@@ -5,9 +5,10 @@ import { getApiError } from '@lib/api/client';
 import { VeteranButton } from '@ui/VeteranButton';
 import { VeteranInput } from '@ui/VeteranInput';
 import { ArrowLeft, Bug } from 'lucide-react';
+import { getRepoParams } from '@lib/route-utils';
 
 export function CreateIssue() {
-  const p = useParams<{ owner: string; name?: string; repo?: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || "";
+  const { owner, repo: name } = getRepoParams();
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');

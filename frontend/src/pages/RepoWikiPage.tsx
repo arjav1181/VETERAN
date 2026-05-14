@@ -6,6 +6,7 @@ import { formatRelativeTime } from '@/lib/utils';
 import { api } from '@lib/api/client';
 import { VeteranSkeleton } from '@ui/VeteranSkeleton';
 import { VeteranEmptyState } from '@ui/VeteranEmptyState';
+import { getRepoParams } from '@lib/route-utils';
 
 export function RepoWikiPage() {
   const { owner, name, slug } = useParams<{ owner: string; name: string; slug: string }>();

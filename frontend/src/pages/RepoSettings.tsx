@@ -28,6 +28,7 @@ import {
   Users,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getRepoParams } from '@lib/route-utils';
 
 const repoInfoSchema = z.object({
   name: z.string().min(1, 'Name is required').regex(/^[a-zA-Z0-9_.-]+$/, 'Invalid repository name'),

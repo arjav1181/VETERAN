@@ -7,9 +7,10 @@ import { InsightCharts } from '@/components/insights/InsightCharts';
 import { api } from '@lib/api/client';
 import { VeteranSkeleton } from '@ui/VeteranSkeleton';
 import { VeteranEmptyState } from '@ui/VeteranEmptyState';
+import { getRepoParams } from '@lib/route-utils';
 
 export function RepoInsights() {
-  const p = useParams<{ owner: string; name?: string; repo?: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || "";
+  const { owner, repo: name } = getRepoParams();
 
   const { data: contribData, isLoading, error } = useQuery({
     queryKey: ['insights', owner, name],

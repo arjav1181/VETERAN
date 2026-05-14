@@ -5,6 +5,7 @@ import { PRList } from '@/components/pulls/PRList';
 import { usePulls } from '@hooks/usePulls';
 import { VeteranSkeleton } from '@ui/VeteranSkeleton';
 import { VeteranEmptyState } from '@ui/VeteranEmptyState';
+import { getRepoParams } from '@lib/route-utils';
 
 function mapPR(apiPr: any): any {
   return {
@@ -57,7 +58,7 @@ function mapPR(apiPr: any): any {
 }
 
 export function RepoPulls() {
-  const p = useParams<{ owner: string; name?: string; repo?: string }>(); const owner = p.owner || ""; const name = p.name || p.repo || "";
+  const { owner, repo: name } = getRepoParams();
   const navigate = useNavigate();
   const [state, setState] = useState<'open' | 'closed' | 'merged'>('open');
 
